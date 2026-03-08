@@ -1,0 +1,351 @@
+/* ==========================================
+   1. VARIÁVEIS E PALETA DE CORES (SaaS Premium)
+========================================== */
+:root {
+    --bg-color: #f4f7f6;
+    --sidebar-bg: #ffffff;
+    --text-color: #2c3e50;
+    --text-muted: #7f8c8d;
+    --card-bg: #ffffff;
+    --column-bg: #ebecf0; /* Cor clássica do fundo do Trello */
+    --border-color: #e1e4e8;
+    --primary-color: #4A90E2;
+    --danger-color: #e74c3c;
+    --success-color: #2ecc71;
+}
+
+body.dark-mode {
+    --bg-color: #0f1115;
+    --sidebar-bg: #161b22;
+    --text-color: #c9d1d9;
+    --text-muted: #8b949e;
+    --card-bg: #21262d;
+    --column-bg: #161b22;
+    --border-color: #30363d;
+}
+
+/* ==========================================
+   2. RESET E LAYOUT BASE
+========================================== */
+* {
+    margin: 0; padding: 0; box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden; /* Corta a rolagem da página inteira. Só o conteúdo rola! */
+}
+
+.hidden { display: none !important; }
+
+/* O container que abraça a Sidebar e o Main */
+.app-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* ==========================================
+   3. SIDEBAR (MENU LATERAL)
+========================================== */
+.sidebar {
+    width: 260px;
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.4s ease;
+    z-index: 10;
+}
+
+.sidebar-brand {
+    padding: 25px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.sidebar-brand h2 { font-size: 20px; color: var(--primary-color); margin: 0; }
+
+.sidebar-nav {
+    flex: 1;
+    padding: 20px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.nav-item {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+.nav-item:hover { background-color: var(--bg-color); }
+.nav-item.active { background-color: var(--primary-color); color: white; }
+.nav-item.disabled { opacity: 0.5; cursor: not-allowed; }
+
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.theme-wrapper {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg-color); padding: 10px 15px; border-radius: 8px;
+}
+
+.btn-sidebar-logout {
+    width: 100%; padding: 12px; background: transparent; 
+    border: 1px solid var(--danger-color); color: var(--danger-color);
+    border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.2s;
+}
+.btn-sidebar-logout:hover { background: var(--danger-color); color: white; }
+
+/* ==========================================
+   4. ÁREA CENTRAL (MAIN) E CABEÇALHOS
+========================================== */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-color);
+    transition: background-color 0.4s ease;
+    overflow-y: auto; /* Permite rolar a tela principal se precisar */
+}
+
+.view-container {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-width: 1400px; /* Evita que fique esticado demais em telas gigantes */
+    margin: 0 auto;
+    width: 100%;
+}
+
+.view-header { margin-bottom: 30px; }
+.view-header.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+.page-title { font-size: 28px; margin-bottom: 5px; color: var(--text-color); }
+.page-subtitle { color: var(--text-muted); font-size: 15px; }
+
+/* Inputs e Barras de Ferramentas */
+.action-toolbar {
+    display: flex; gap: 15px; margin-bottom: 30px;
+    background: var(--card-bg); padding: 15px;
+    border-radius: 10px; border: 1px solid var(--border-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.input-pro {
+    flex: 1; padding: 12px 15px; border: 1px solid var(--border-color);
+    border-radius: 6px; background: var(--bg-color); color: var(--text-color);
+    font-size: 14px; outline: none; transition: border 0.2s;
+    width: 100%;
+}
+.input-pro:focus { border-color: var(--primary-color); }
+
+.search-box {
+    display: flex; align-items: center; background: var(--card-bg);
+    border: 1px solid var(--border-color); border-radius: 20px;
+    padding: 5px 15px; width: 300px;
+}
+.search-box input {
+    border: none; background: transparent; color: var(--text-color);
+    padding: 8px; width: 100%; outline: none;
+}
+
+.btn-icon {
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    padding: 8px 15px; border-radius: 6px; cursor: pointer;
+    font-weight: bold; color: var(--text-color); transition: 0.2s;
+}
+.btn-icon:hover { background: var(--border-color); }
+
+/* ==========================================
+   5. GRID DE PROJETOS E CARDS
+========================================== */
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.workspace-card {
+    background: var(--card-bg);
+    border-radius: 10px; padding: 20px;
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--primary-color);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    display: flex; flex-direction: column; justify-content: space-between;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.workspace-card:hover { transform: translateY(-3px); box-shadow: 0 6px 12px rgba(0,0,0,0.05); }
+.workspace-card h3 { color: var(--text-color); font-size: 18px; margin-bottom: 8px; }
+.workspace-card p { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; line-height: 1.5; }
+
+/* ==========================================
+   6. KANBAN PROFISSIONAL (Trello Style)
+========================================== */
+.kanban-board {
+    display: flex; gap: 20px; flex: 1;
+    min-height: 0; /* Essencial para as colunas rolarem individualmente */
+    align-items: flex-start; /* Impede as colunas de esticarem até o pé se estiverem vazias */
+}
+
+.kanban-column {
+    background-color: var(--column-bg);
+    border-radius: 10px; width: 350px;
+    display: flex; flex-direction: column;
+    max-height: 100%; /* Limita a altura para a tela */
+    border: 1px solid var(--border-color);
+}
+
+.column-header {
+    padding: 15px; border-bottom: 2px solid var(--border-color);
+}
+.column-header h3 { font-size: 15px; color: var(--text-color); margin: 0; }
+
+.scrollable-column {
+    padding: 15px; overflow-y: auto; flex: 1;
+    display: flex; flex-direction: column; gap: 12px;
+}
+/* Scrollbar fininha e elegante */
+.scrollable-column::-webkit-scrollbar { width: 6px; }
+.scrollable-column::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+.task-card {
+    background: var(--card-bg); color: var(--text-color);
+    padding: 15px; border-radius: 8px;
+    border-left: 4px solid #f1c40f;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    display: flex; flex-direction: column; gap: 15px;
+    cursor: grab; transition: border-color 0.2s;
+}
+.task-card:active { cursor: grabbing; }
+.task-card.concluida { border-left-color: var(--success-color); opacity: 0.6; }
+
+.task-content { word-wrap: break-word; overflow-wrap: break-word; }
+.task-content h4 { margin: 0; font-size: 15px; line-height: 1.4; color: var(--text-color); }
+.texto-riscado { text-decoration: line-through; }
+
+.task-actions {
+    display: flex; gap: 8px; align-items: center; justify-content: flex-end;
+    border-top: 1px dashed var(--border-color); padding-top: 10px;
+}
+
+/* ==========================================
+   7. BOTÕES UNIVERSAIS DE AÇÃO
+========================================== */
+.btn-primary, .task-actions button, .workspace-card button, .modal-actions button {
+    cursor: pointer; border: none; border-radius: 6px;
+    color: white; font-size: 13px; font-weight: bold;
+    height: 34px; display: inline-flex; align-items: center; justify-content: center;
+    padding: 0 14px; transition: 0.2s;
+}
+.btn-primary { background-color: var(--primary-color); font-size: 14px; height: 42px; padding: 0 20px; }
+.btn-primary:hover { background-color: #357ABD; }
+.btn-concluir { background-color: var(--success-color); }
+.btn-concluir:hover { background-color: #27ae60; }
+.btn-desfazer { background-color: var(--text-muted); }
+.btn-desfazer:hover { background-color: #636e72; }
+.btn-deletar { background-color: var(--danger-color); padding: 0 !important; width: 34px; font-size: 16px; line-height: 0; }
+.btn-deletar:hover { background-color: #c0392b; }
+
+/* ==========================================
+   8. APPLE SWITCH, MODAIS E TOASTS
+========================================== */
+/* (Os estilos do Switch Apple, Modais e Toasts foram mantidos da versão anterior) */
+.theme-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+.theme-switch .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #f1c40f; transition: .4s; display: flex; align-items: center; justify-content: space-between; padding: 0 4px; border-radius: 30px;}
+.theme-switch .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.theme-switch input:checked + .slider { background-color: #2c3e50; }
+.theme-switch input:checked + .slider:before { transform: translateX(24px); }
+.theme-switch .icon-sun, .theme-switch .icon-moon { font-size: 10px; z-index: 1; user-select: none; }
+
+.modal-box { background: var(--card-bg); color: var(--text-color); padding: 25px 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 1px solid var(--border-color); animation: popUp 0.3s ease-out forwards; }
+@keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal-box h3 { margin-top: 0; margin-bottom: 10px; text-align: center; }
+.modal-box p { font-size: 14px; margin-bottom: 25px; opacity: 0.8; text-align: center; }
+.modal-label { display: block; text-align: left; font-size: 13px; margin-bottom: 5px; color: var(--text-muted); font-weight: bold;}
+.modal-actions { display: flex; gap: 15px; margin-top: 20px;}
+.modal-actions button { flex: 1; height: 40px; }
+
+.toast { min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); opacity: 0; transform: translateX(100%); transition: opacity 0.3s, transform 0.3s; display: flex; align-items: center; gap: 10px; }
+.toast.show { opacity: 1; transform: translateX(0); }
+.toast.success { background-color: var(--success-color); border-left: 5px solid #27ae60; }
+.toast.error { background-color: var(--danger-color); border-left: 5px solid #c0392b; }
+.toast.warning { background-color: #f39c12; border-left: 5px solid #d68910; }
+
+/* ==========================================
+   9. RESPONSIVIDADE (MOBILE)
+========================================== */
+@media (max-width: 768px) {
+    .app-layout { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); flex-direction: row; justify-content: space-between; align-items: center; padding: 10px; }
+    .sidebar-nav, .sidebar-footer { display: none; /* Esconde o menu detalhado no celular para focar no conteúdo */ }
+    .sidebar-brand { padding: 10px; border: none; }
+    .view-container { padding: 20px; }
+    .action-toolbar { flex-direction: column; }
+    .kanban-board { flex-direction: column; overflow-y: auto; }
+    .kanban-column { width: 100%; max-height: none; }
+    .scrollable-column { overflow-y: visible; }
+    .view-header.flex-between { flex-direction: column; align-items: flex-start; gap: 15px;}
+    .search-box { width: 100%; }
+}
+
+/* ==========================================
+   10. TELA DE LOGIN / CADASTRO
+========================================== */
+.auth-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: var(--column-bg); /* Fundo levemente contrastante com o card */
+}
+
+.auth-container {
+    width: 100%;
+    max-width: 420px;
+    padding: 20px;
+}
+
+.auth-card {
+    background: var(--card-bg);
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color);
+}
+
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper .input-pro {
+    padding-right: 40px; /* Dá espaço para o emoji não ficar em cima do texto */
+}
+
+.toggle-password {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 16px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.toggle-password:hover {
+    opacity: 1;
+}

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniProject - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-layout">
+        
+        <aside class="sidebar">
+            <div class="sidebar-brand">
+                <h2>🚀 OmniProject</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active">📊 Meus Projetos</a>
+                <a href="#" class="nav-item disabled">⚙️ Configurações</a> 
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="theme-wrapper">
+                    <span style="font-size: 13px; font-weight: bold;">Tema:</span>
+                    <label class="theme-switch" title="Mudar Tema">
+                        <input type="checkbox" class="checkbox-theme" onchange="toggleDarkMode()">
+                        <span class="slider round">
+                            <span class="icon-sun">☀️</span>
+                            <span class="icon-moon">🌙</span>
+                        </span>
+                    </label>
+                </div>
+                <button id="btn-logout" class="btn-sidebar-logout">🚪 Sair do Sistema</button>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            
+            <div id="view-workspaces" class="view-container">
+                <header class="view-header">
+                    <div>
+                        <h1 class="page-title">Meus Workspaces</h1>
+                        <p class="page-subtitle">Gerencie todos os seus projetos em um só lugar.</p>
+                    </div>
+                </header>
+
+                <div class="action-toolbar">
+                    <input type="text" id="new-workspace-name" placeholder="Nome do Novo Projeto..." class="input-pro">
+                    <input type="text" id="new-workspace-desc" placeholder="Descrição rápida..." class="input-pro">
+                    <button id="btn-create-workspace" class="btn-primary" style="width: auto; white-space: nowrap;">+ Criar Projeto</button>
+                </div>
+
+                <div id="workspaces-list" class="projects-grid"></div>
+            </div>
+
+            <div id="view-tasks" class="view-container hidden">
+                <header class="view-header flex-between">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button id="btn-back" class="btn-icon">&larr; Voltar</button>
+                        <h1 id="workspace-title" class="page-title" style="margin: 0;">Nome do Projeto</h1>
+                    </div>
+                    
+                    <div class="search-box">
+                        <span>🔍</span>
+                        <input type="text" id="task-search" placeholder="Buscar tarefa...">
+                    </div>
+                </header>
+
+                <div class="action-toolbar">
+                    <input type="text" id="new-task-title" placeholder="O que precisa ser feito agora?" class="input-pro" style="flex: 1;">
+                    <button id="btn-create-task" class="btn-primary" style="width: auto; background-color: #f1c40f; color: #333;">+ Adicionar Tarefa</button>
+                </div>
+
+                <div class="kanban-board">
+                    <div class="kanban-column" id="coluna-fazer">
+                        <div class="column-header">
+                            <h3>📌 A Fazer</h3>
+                        </div>
+                        <div class="kanban-cards scrollable-column" id="tasks-fazer" ondragover="allowDrop(event)" ondrop="dropTask(event, false)">
+                            <p style="color: #777; font-size: 14px; text-align: center; margin-top: 20px;">Nenhuma tarefa pendente.</p>
+                        </div>
+                    </div>
+
+                    <div class="kanban-column" id="coluna-concluida">
+                        <div class="column-header">
+                            <h3>✅ Concluídas</h3>
+                        </div>
+                        <div class="kanban-cards scrollable-column" id="tasks-concluidas" ondragover="allowDrop(event)" ondrop="dropTask(event, true)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="modal-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
+        <div id="modal-confirm" class="modal-box hidden">
+            <h3 id="modal-confirm-title">Tem certeza?</h3>
+            <p id="modal-confirm-msg">Essa ação não pode ser desfeita.</p>
+            <div class="modal-actions">
+                <button onclick="fecharModais()" class="btn-desfazer">Cancelar</button>
+                <button onclick="confirmarDelecaoModal()" class="btn-deletar" style="width: auto; height: auto;">Sim, Deletar</button>
+            </div>
+        </div>
+        <div id="modal-edit" class="modal-box hidden">
+            <h3>✏️ Editar Projeto</h3>
+            <label class="modal-label">Nome do Projeto:</label>
+            <input type="text" id="modal-edit-name" class="input-pro" style="margin-bottom: 10px;">
+            <label class="modal-label">Descrição:</label>
+            <input type="text" id="modal-edit-desc" class="input-pro" style="margin-bottom: 20px;">
+            <div class="modal-actions">
+                <button onclick="fecharModais()" class="btn-desfazer">Cancelar</button>
+                <button onclick="confirmarEdicaoModal()" class="btn-concluir">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>
