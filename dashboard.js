@@ -4,6 +4,7 @@
 const API_URL = 'http://localhost:8080';
 const token = localStorage.getItem('token');
 let workspaceAtualId = null;
+let filtroStatusAtual = 'all';
 
 if (!token) {
     window.location.href = 'index.html';
@@ -221,8 +222,15 @@ function deletarWorkspace(event, id) {
 // 5. LÓGICA DE TAREFAS E BUSCA
 // ==========================================
 async function abrirWorkspace(id, nome) {
+    // 1. Limpa o texto da busca
     const searchInput = document.getElementById('task-search');
     if (searchInput) searchInput.value = '';
+
+    // 2. Reseta a pílula para "Todas"
+    filtroStatusAtual = 'all';
+    document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+    const btnAll = document.querySelector('.filter-pill[data-filter="all"]');
+    if(btnAll) btnAll.classList.add('active');
 
     workspaceAtualId = id;
     document.getElementById('workspace-title').innerText = nome;
@@ -275,8 +283,9 @@ async function carregarTasks() {
                     listConcluidas.appendChild(div);
                 } else {
                     listFazer.appendChild(div);
-                }
+                }   
             });
+            aplicarFiltrosTasks();
         }
     } catch (error) { 
         console.error("Erro ao carregar tarefas:", error); 
@@ -336,24 +345,55 @@ function deletarTask(id) {
 
 function configurarFiltroBusca() {
     const searchInput = document.getElementById('task-search');
+    const pills = document.querySelectorAll('.filter-pill');
     
+    // Fica de olho na barra de texto
     if (searchInput) {
-        searchInput.addEventListener('input', () => {
-            const termoBusca = searchInput.value.toLowerCase();
-            const todosOsCards = document.querySelectorAll('.task-card');
-
-            todosOsCards.forEach(card => {
-                const tituloTarefa = card.querySelector('h4').innerText.toLowerCase();
-                if (tituloTarefa.includes(termoBusca)) {
-                    card.style.display = 'flex'; 
-                } else {
-                    card.style.display = 'none'; 
-                }
-            });
-        });
+        searchInput.addEventListener('input', aplicarFiltrosTasks);
     }
+
+    // Fica de olho nos cliques das pílulas
+    pills.forEach(pill => {
+        pill.addEventListener('click', (e) => {
+            // Tira o "active" de todas as pílulas
+            pills.forEach(p => p.classList.remove('active'));
+            
+            // Coloca o "active" só na que foi clicada
+            const clickedPill = e.target;
+            clickedPill.classList.add('active');
+            
+            // Salva qual é o filtro atual e aplica a lógica
+            filtroStatusAtual = clickedPill.getAttribute('data-filter');
+            aplicarFiltrosTasks();
+        });
+    });
 }
 
+function aplicarFiltrosTasks() {
+    const searchInput = document.getElementById('task-search');
+    const termoBusca = searchInput ? searchInput.value.toLowerCase() : '';
+    const todosOsCards = document.querySelectorAll('.task-card');
+
+    todosOsCards.forEach(card => {
+        const tituloTarefa = card.querySelector('h4').innerText.toLowerCase();
+        const isConcluida = card.classList.contains('concluida');
+        
+        // 1. Verifica se bate com o texto digitado
+        const bateTexto = tituloTarefa.includes(termoBusca);
+        
+        // 2. Verifica se bate com a pílula clicada
+        let bateStatus = true;
+        if (filtroStatusAtual === 'pending' && isConcluida) bateStatus = false;
+        if (filtroStatusAtual === 'completed' && !isConcluida) bateStatus = false;
+
+        // 3. Só mostra se passar nos DOIS testes
+        if (bateTexto && bateStatus) {
+            card.style.display = 'flex'; 
+        } else {
+            card.style.display = 'none'; 
+        }
+    });
+}
 // ==========================================
 // 6. LÓGICA DE ARRASTAR E SOLTAR (DRAG & DROP)
 // ==========================================
