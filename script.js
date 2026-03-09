@@ -12,10 +12,10 @@ function togglePassword(inputId, iconElement) {
     
     if (input.type === 'password') {
         input.type = 'text';
-        iconElement.innerText = '🙈'; // Troca pro macaquinho tampando o rosto (ou outro emoji se preferir)
+        iconElement.innerText = '🙈'; 
     } else {
         input.type = 'password';
-        iconElement.innerText = '👁️'; // Volta pro olho
+        iconElement.innerText = '👁️'; 
     }
 }
 
@@ -51,6 +51,8 @@ async function fazerLogin() {
 
 // 4. Função para Fazer Cadastro (Botão Cadastrar)
 async function fazerCadastro() {
+    // Pegando todos os dados da tela (Agora com o Nome!)
+    const nome = document.getElementById('register-nome').value;
     const email = document.getElementById('register-email').value;
     const password = document.getElementById('register-password').value;
     const confirmPassword = document.getElementById('register-confirm').value;
@@ -61,29 +63,32 @@ async function fazerCadastro() {
         return;
     }
 
-    if (!email || !password) {
+    // VALIDAÇÃO UX: Todos os campos estão preenchidos?
+    if (!nome || !email || !password) {
         alert("Preencha todos os campos!");
         return;
     }
 
     try {
-        // *Amanhã no Java precisamos garantir que essa URL seja a correta para cadastro*
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, senha: password })
+            // A MÁGICA: Enviando o 'nome' no corpo da requisição!
+            body: JSON.stringify({ nome: nome, email: email, senha: password })
         });
 
         if (response.ok) {
             alert("Conta criada com sucesso! Faça login para entrar.");
             alternarTelas(); // Volta pra tela de login automaticamente
             
-            // Já preenche o e-mail pro usuário não ter que digitar de novo (Toque de Mestre UX)
+            // Limpa os campos e preenche o e-mail no login
             document.getElementById('login-email').value = email;
+            document.getElementById('register-nome').value = '';
+            document.getElementById('register-email').value = '';
             document.getElementById('register-password').value = '';
             document.getElementById('register-confirm').value = '';
         } else {
-            alert("Erro ao criar conta. Esse e-mail já existe?");
+            alert("Erro ao criar conta. O e-mail já existe ou a senha é muito fraca.");
         }
     } catch (error) {
         console.error("Erro na requisição:", error);
@@ -91,13 +96,19 @@ async function fazerCadastro() {
     }
 }
 
-// 5. Acionando pelo botão Enter (Para ficar profissa)
+// 5. Acionando pelo botão Enter
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('login-password').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') fazerLogin();
-    });
+    const inputLoginPassword = document.getElementById('login-password');
+    if (inputLoginPassword) {
+        inputLoginPassword.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fazerLogin();
+        });
+    }
     
-    document.getElementById('register-confirm').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') fazerCadastro();
-    });
+    const inputRegisterConfirm = document.getElementById('register-confirm');
+    if (inputRegisterConfirm) {
+        inputRegisterConfirm.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') fazerCadastro();
+        });
+    }
 });

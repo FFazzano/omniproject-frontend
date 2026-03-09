@@ -4,7 +4,8 @@
 const API_URL = 'http://localhost:8080';
 const token = localStorage.getItem('token');
 let workspaceAtualId = null;
-let filtroStatusAtual = 'all';
+let filtroStatusAtual = 'all'; // Estado do nosso Filtro Rápido (Pílulas)
+let tarefaAtualComentariosId = null;
 
 if (!token) {
     window.location.href = 'index.html';
@@ -15,11 +16,7 @@ if (!token) {
 // ==========================================
 function showToast(mensagem, tipo = 'success') {
     const container = document.getElementById('toast-container');
-    
-    if (!container) {
-        alert(mensagem);
-        return;
-    }
+    if (!container) { alert(mensagem); return; }
     
     const toast = document.createElement('div');
     let icone = '✅';
@@ -43,9 +40,7 @@ function toggleDarkMode() {
     const isDark = body.classList.contains('dark-mode');
     localStorage.setItem('omni_theme', isDark ? 'dark' : 'light');
 
-    document.querySelectorAll('.checkbox-theme').forEach(cb => {
-        cb.checked = isDark;
-    });
+    document.querySelectorAll('.checkbox-theme').forEach(cb => { cb.checked = isDark; });
 }
 
 // ==========================================
@@ -55,87 +50,78 @@ let tipoAcaoModal = null;
 let idItemModal = null;   
 
 function fecharModais() {
-    document.getElementById('modal-overlay').classList.add('hidden');
-    document.getElementById('modal-confirm').classList.add('hidden');
-    document.getElementById('modal-edit').classList.add('hidden');
-    tipoAcaoModal = null;
-    idItemModal = null;
+    const overlay = document.getElementById('modal-overlay');
+    if (overlay) {
+        overlay.classList.add('hidden');
+        overlay.style.display = 'none'; // Some com a tela preta
+    }
+
+    const modais = ['modal-confirm', 'modal-edit', 'modal-comments'];
+    modais.forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.style.display = 'none'; // Some com as caixas
+        }
+    });
+    
+    tipoAcaoModal = null; idItemModal = null; tarefaAtualComentariosId = null;
 }
 
 function abrirModalDeletar(tipo, id, titulo, mensagem) {
-    tipoAcaoModal = tipo;
-    idItemModal = id;
+    tipoAcaoModal = tipo; idItemModal = id;
     document.getElementById('modal-confirm-title').innerText = titulo;
     document.getElementById('modal-confirm-msg').innerText = mensagem;
     document.getElementById('modal-overlay').classList.remove('hidden');
     document.getElementById('modal-confirm').classList.remove('hidden');
+    document.getElementById('modal-overlay').style.display = 'flex';
+    document.getElementById('modal-confirm').style.display = 'block';
 }
 
 async function confirmarDelecaoModal() {
     if (!idItemModal) return;
-
-    const url = tipoAcaoModal === 'workspace' 
-        ? `${API_URL}/workspaces/${idItemModal}` 
-        : `${API_URL}/tasks/${idItemModal}`;
+    const url = tipoAcaoModal === 'workspace' ? `${API_URL}/workspaces/${idItemModal}` : `${API_URL}/tasks/${idItemModal}`;
 
     try {
-        const response = await fetch(url, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        const response = await fetch(url, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
-            if (tipoAcaoModal === 'workspace') carregarWorkspaces();
-            else carregarTasks();
+            if (tipoAcaoModal === 'workspace') carregarWorkspaces(); else carregarTasks();
             showToast("Item apagado com sucesso.", "success");
         } else {
             showToast("Erro ao deletar.", "error");
         }
     } catch (error) { console.error("Erro:", error); }
-    
     fecharModais();
 }
 
 function editarWorkspace(event, id, nomeAtual, descAtual) {
-    event.stopPropagation();
-    idItemModal = id;
+    event.stopPropagation(); idItemModal = id;
     document.getElementById('modal-edit-name').value = nomeAtual;
-    const descLimpa = descAtual === 'undefined' ? '' : descAtual;
-    document.getElementById('modal-edit-desc').value = descLimpa;
-
+    document.getElementById('modal-edit-desc').value = descAtual === 'undefined' ? '' : descAtual;
     document.getElementById('modal-overlay').classList.remove('hidden');
     document.getElementById('modal-edit').classList.remove('hidden');
+    document.getElementById('modal-overlay').style.display = 'flex';
+    document.getElementById('modal-edit').style.display = 'block';
 }
 
 async function confirmarEdicaoModal() {
     if (!idItemModal) return;
-
     const novoNome = document.getElementById('modal-edit-name').value;
     const novaDesc = document.getElementById('modal-edit-desc').value;
 
-    if (!novoNome.trim()) {
-        showToast("O nome do projeto é obrigatório!", "warning");
-        return;
-    }
+    if (!novoNome.trim()) { showToast("O nome do projeto é obrigatório!", "warning"); return; }
 
     try {
         const response = await fetch(`${API_URL}/workspaces/${idItemModal}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
             body: JSON.stringify({ nome: novoNome, descricao: novaDesc })
         });
-
         if (response.ok) {
             carregarWorkspaces();
             showToast("Projeto editado com sucesso!", "success");
-        } else {
-            showToast("Erro ao editar o projeto.", "error");
-        }
+        } else { showToast("Erro ao editar o projeto.", "error"); }
     } catch (error) { console.error("Erro ao editar:", error); }
-    
     fecharModais();
 }
 
@@ -145,72 +131,84 @@ async function confirmarEdicaoModal() {
 async function carregarWorkspaces() {
     const list = document.getElementById('workspaces-list');
     try {
-        const response = await fetch(`${API_URL}/workspaces`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        const response = await fetch(`${API_URL}/workspaces`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
             const workspaces = await response.json();
             list.innerHTML = '';
-
+            
             if (workspaces.length === 0) {
-                list.innerHTML = '<p>Nenhum projeto encontrado. Crie um acima!</p>';
+                list.innerHTML = '<p style="color: var(--text-muted);">Nenhum projeto encontrado. Crie um acima!</p>';
                 return;
             }
-
+            
             workspaces.forEach(ws => {
+                let dataCriacaoFormatada = 'N/A';
+                if (ws.dataCriacao) {
+                    const data = new Date(ws.dataCriacao);
+                    dataCriacaoFormatada = data.toLocaleDateString('pt-BR');
+                }
+
+                let dataEntregaFormatada = 'Sem prazo';
+                if (ws.dataEntrega) {
+                    const partes = ws.dataEntrega.split('-'); 
+                    if(partes.length === 3) dataEntregaFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+                }
+
+                // Lógica visual do botão Concluir
+                const textoConcluir = ws.concluido ? '↩ Reabrir' : '✔ Concluir';
+                const corConcluir = ws.concluido ? '#95a5a6' : '#2ecc71';
+
                 const div = document.createElement('div');
-                div.className = 'workspace-card';
+                // Adiciona a classe 'concluido' se o Java disser que é true
+                div.className = `workspace-card ${ws.concluido ? 'concluido' : ''}`;
+                
                 div.innerHTML = `
                     <div onclick="abrirWorkspace(${ws.id}, '${ws.nome.replace(/'/g, "\\'")}')" style="cursor:pointer; padding-bottom: 15px;">
                         <h3>${ws.nome}</h3>
                         <p>${ws.descricao || 'Sem descrição'}</p>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 15px; font-size: 12px; color: var(--text-muted);">
+                            <span title="Data de Criação">📅 Criado: <strong>${dataCriacaoFormatada}</strong></span>
+                            <span title="Prazo de Entrega">🎯 Prazo: <strong>${dataEntregaFormatada}</strong></span>
+                        </div>
                     </div>
-                    <div style="border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; gap: 10px;">
-                        <button onclick="editarWorkspace(event, ${ws.id}, '${ws.nome.replace(/'/g, "\\'")}', '${(ws.descricao || '').replace(/'/g, "\\'")}')" class="btn-primary" style="background-color: #3498db; padding: 5px 10px; font-size: 12px; width: auto;">✏️ Editar</button>
-                        <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c; padding: 5px 10px; font-size: 12px; width: auto;">🗑️ Deletar</button>
+                    
+                    <div style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; gap: 10px;">
+                        <button onclick="toggleConcluirWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: ${corConcluir}; height: 32px;">${textoConcluir}</button>
+                        
+                        <button onclick="editarWorkspace(event, ${ws.id}, '${ws.nome.replace(/'/g, "\\'")}', '${(ws.descricao || '').replace(/'/g, "\\'")}')" class="btn-primary" style="background-color: #3498db; height: 32px;">✏️ Editar</button>
+                        <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c; height: 32px;">🗑️ Deletar</button>
                     </div>
                 `;
                 list.appendChild(div);
             });
         }
-    } catch (error) {
-        console.error("Erro ao carregar workspaces:", error);
+    } catch (error) { 
+        console.error("Erro ao carregar workspaces:", error); 
     }
 }
 
 async function criarWorkspace() {
     const nome = document.getElementById('new-workspace-name').value;
-    const descElement = document.getElementById('new-workspace-desc');
-    const desc = descElement ? descElement.value : '';
+    const desc = document.getElementById('new-workspace-desc') ? document.getElementById('new-workspace-desc').value : '';
+    const dataEntrega = document.getElementById('new-workspace-date') ? document.getElementById('new-workspace-date').value : null;
 
-    if (!nome) {
-        showToast("O nome do projeto é obrigatório!", "warning");
-        return;
-    }
+    if (!nome) { showToast("O nome do projeto é obrigatório!", "warning"); return; }
 
     try {
         const response = await fetch(`${API_URL}/workspaces`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ nome: nome, descricao: desc })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ nome: nome, descricao: desc, dataEntrega: dataEntrega })
         });
-
         if (response.ok) {
             document.getElementById('new-workspace-name').value = '';
-            if(descElement) descElement.value = '';
+            if(document.getElementById('new-workspace-desc')) document.getElementById('new-workspace-desc').value = '';
+            if(document.getElementById('new-workspace-date')) document.getElementById('new-workspace-date').value = '';
             carregarWorkspaces();
             showToast("Projeto criado com sucesso!", "success");
-        } else {
-            showToast("Erro ao criar o projeto no servidor.", "error");
-        }
-    } catch (error) {
-        console.error("Erro ao criar workspace:", error);
-        showToast("Erro de conexão.", "error");
-    }
+        } else { showToast("Erro ao criar o projeto no servidor.", "error"); }
+    } catch (error) { showToast("Erro de conexão.", "error"); }
 }
 
 function deletarWorkspace(event, id) {
@@ -218,15 +216,33 @@ function deletarWorkspace(event, id) {
     abrirModalDeletar('workspace', id, 'Deletar Projeto', 'Tem certeza? Todas as tarefas vão desaparecer para sempre!');
 }
 
+async function toggleConcluirWorkspace(event, id) {
+    event.stopPropagation(); // O pulo do gato: impede que o clique no botão abra a tela de tarefas!
+    
+    try {
+        const response = await fetch(`${API_URL}/workspaces/${id}/concluir`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            carregarWorkspaces(); // Recarrega a tela para mostrar o novo visual
+            showToast("Status do projeto atualizado!", "success");
+        } else {
+            showToast("Erro ao atualizar o projeto.", "error");
+        }
+    } catch (error) {
+        console.error("Erro ao concluir projeto:", error);
+    }
+}
+
 // ==========================================
-// 5. LÓGICA DE TAREFAS E BUSCA
+// 5. LÓGICA DE TAREFAS
 // ==========================================
 async function abrirWorkspace(id, nome) {
-    // 1. Limpa o texto da busca
     const searchInput = document.getElementById('task-search');
     if (searchInput) searchInput.value = '';
 
-    // 2. Reseta a pílula para "Todas"
     filtroStatusAtual = 'all';
     document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
     const btnAll = document.querySelector('.filter-pill[data-filter="all"]');
@@ -241,101 +257,113 @@ async function abrirWorkspace(id, nome) {
 
 async function carregarTasks() {
     const listFazer = document.getElementById('tasks-fazer');
+    const listAndamento = document.getElementById('tasks-andamento');
     const listConcluidas = document.getElementById('tasks-concluidas');
-
-    listFazer.innerHTML = '';
-    listConcluidas.innerHTML = '';
+    
+    listFazer.innerHTML = ''; listAndamento.innerHTML = ''; listConcluidas.innerHTML = '';
 
     try {
-        const response = await fetch(`${API_URL}/tasks/workspace/${workspaceAtualId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-
+        const response = await fetch(`${API_URL}/tasks/workspace/${workspaceAtualId}`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
             const tasks = await response.json();
+            
+            // --- A MATEMÁTICA DA BARRA DE PROGRESSO ---
+            const totalTarefas = tasks.length;
+            const tarefasConcluidas = tasks.filter(t => t.status === 'CONCLUIDO').length;
+            const porcentagem = totalTarefas === 0 ? 0 : Math.round((tarefasConcluidas / totalTarefas) * 100);
+            
+            const barra = document.getElementById('progress-bar');
+            const textoProgresso = document.getElementById('progress-text');
+            if (barra && textoProgresso) {
+                barra.style.width = `${porcentagem}%`;
+                textoProgresso.innerText = `${porcentagem}% (${tarefasConcluidas}/${totalTarefas})`;
+                barra.style.background = porcentagem === 100 ? '#f1c40f' : '#2ecc71'; 
+            }
+            // ------------------------------------------
 
             if (tasks.length === 0) {
-                listFazer.innerHTML = '<p style="color: #777;">Nenhuma tarefa ainda. Crie a primeira!</p>';
-                return;
+                listFazer.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 20px;">Nenhuma tarefa ainda.</p>';
+                aplicarFiltrosTasks(); return;
             }
 
             tasks.forEach(t => {
                 const div = document.createElement('div');
-                div.className = `task-card ${t.concluida ? 'concluida' : ''}`;
-                
+                const isConcluida = t.status === 'CONCLUIDO';
+                div.className = `task-card ${isConcluida ? 'concluida' : ''}`;
                 div.setAttribute('draggable', 'true');
                 div.setAttribute('ondragstart', `dragStart(event, ${t.id}, '${t.titulo.replace(/'/g, "\\'")}')`);
 
-                const textoBotao = t.concluida ? '↩ Desfazer' : '✔ Concluir';
-                const classeBotao = t.concluida ? 'btn-desfazer' : 'btn-concluir';
+                // Lógica inteligente do botão (Avança o status)
+                let textoBotao = '▶️ Iniciar';
+                let novoStatusClick = 'ANDAMENTO';
+                let classeBotao = 'btn-concluir';
+
+                if (t.status === 'ANDAMENTO') {
+                    textoBotao = '✔ Concluir';
+                    novoStatusClick = 'CONCLUIDO';
+                } else if (isConcluida) {
+                    textoBotao = '↩ Reabrir';
+                    novoStatusClick = 'PENDENTE';
+                    classeBotao = 'btn-desfazer';
+                }
 
                 div.innerHTML = `
                     <div class="task-content">
-                        <h4 class="${t.concluida ? 'texto-riscado' : ''}">${t.titulo}</h4>
+                        <h4 class="${isConcluida ? 'texto-riscado' : ''}">${t.titulo}</h4>
                     </div>
-                    <div class="task-actions" style="align-items: center;">
-                        <button onclick="toggleConcluirTask(${t.id}, '${t.titulo.replace(/'/g, "\\'")}', ${t.concluida})" class="${classeBotao}">${textoBotao}</button>
+                    <div class="task-actions">
+                        <button onclick="abrirModalComentarios(${t.id}, '${t.titulo.replace(/'/g, "\\'")}')" class="btn-comentarios" title="Ver Comentários">💬</button>
+                        <button onclick="mudarStatusTask(${t.id}, '${t.titulo.replace(/'/g, "\\'")}', '${novoStatusClick}')" class="${classeBotao}">${textoBotao}</button>
                         <button onclick="deletarTask(${t.id})" class="btn-deletar">🗑️</button>
                     </div>
                 `;
-
-                if (t.concluida) {
-                    listConcluidas.appendChild(div);
-                } else {
-                    listFazer.appendChild(div);
-                }   
+                
+                // Joga a tarefa na coluna certa
+                if (t.status === 'ANDAMENTO') listAndamento.appendChild(div);
+                else if (t.status === 'CONCLUIDO') listConcluidas.appendChild(div);
+                else listFazer.appendChild(div); // PENDENTE ou qualquer outra coisa cai aqui
             });
-            aplicarFiltrosTasks();
+            
+            aplicarFiltrosTasks(); 
         }
-    } catch (error) { 
-        console.error("Erro ao carregar tarefas:", error); 
-    }
+    } catch (error) { console.error("Erro ao carregar tarefas:", error); }
 }
 
 async function criarTask() {
     const titulo = document.getElementById('new-task-title').value;
-    if (!titulo) {
-        showToast("O título da tarefa é obrigatório!", "warning");
-        return;
-    }
+    if (!titulo) { showToast("O título da tarefa é obrigatório!", "warning"); return; }
 
     try {
         const response = await fetch(`${API_URL}/tasks`, {
             method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ titulo: titulo, concluida: false, workspace: { id: workspaceAtualId } })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            // Manda o status ao invés de concluida: false
+            body: JSON.stringify({ titulo: titulo, status: 'PENDENTE', workspace: { id: workspaceAtualId } })
         });
         if (response.ok) {
             document.getElementById('new-task-title').value = '';
             carregarTasks();
             showToast("Tarefa adicionada!", "success");
-        } else {
-            showToast("Erro ao adicionar tarefa.", "error");
-        }
+        } else { showToast("Erro ao adicionar tarefa.", "error"); }
     } catch (error) { console.error(error); }
 }
 
-async function toggleConcluirTask(id, titulo, statusAtual) {
+// A NOVA FUNÇÃO QUE SUBSTITUI A TOGGLE CONCLUIR
+async function mudarStatusTask(id, titulo, novoStatus) {
     try {
         const response = await fetch(`${API_URL}/tasks/${id}`, {
             method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}` 
-            },
-            body: JSON.stringify({ titulo: titulo, concluida: !statusAtual })
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            // O segredo está aqui: agora enviamos o 'status' com a palavra certa (PENDENTE, ANDAMENTO ou CONCLUIDO)
+            body: JSON.stringify({ titulo: titulo, status: novoStatus })
         });
-
         if (response.ok) {
-            carregarTasks();
+            carregarTasks(); 
         } else {
             showToast("Erro ao atualizar a tarefa.", "error");
         }
-    } catch (error) {
-        console.error("Erro ao concluir tarefa:", error);
+    } catch (error) { 
+        console.error("Erro ao mudar status:", error); 
     }
 }
 
@@ -343,26 +371,22 @@ function deletarTask(id) {
     abrirModalDeletar('task', id, 'Deletar Tarefa', 'Quer mesmo apagar essa tarefa da lista?');
 }
 
+// ==========================================
+// 6. FILTROS RÁPIDOS E BUSCA 
+// ==========================================
 function configurarFiltroBusca() {
     const searchInput = document.getElementById('task-search');
     const pills = document.querySelectorAll('.filter-pill');
     
-    // Fica de olho na barra de texto
     if (searchInput) {
         searchInput.addEventListener('input', aplicarFiltrosTasks);
     }
 
-    // Fica de olho nos cliques das pílulas
     pills.forEach(pill => {
         pill.addEventListener('click', (e) => {
-            // Tira o "active" de todas as pílulas
             pills.forEach(p => p.classList.remove('active'));
-            
-            // Coloca o "active" só na que foi clicada
             const clickedPill = e.target;
             clickedPill.classList.add('active');
-            
-            // Salva qual é o filtro atual e aplica a lógica
             filtroStatusAtual = clickedPill.getAttribute('data-filter');
             aplicarFiltrosTasks();
         });
@@ -378,15 +402,12 @@ function aplicarFiltrosTasks() {
         const tituloTarefa = card.querySelector('h4').innerText.toLowerCase();
         const isConcluida = card.classList.contains('concluida');
         
-        // 1. Verifica se bate com o texto digitado
         const bateTexto = tituloTarefa.includes(termoBusca);
         
-        // 2. Verifica se bate com a pílula clicada
         let bateStatus = true;
         if (filtroStatusAtual === 'pending' && isConcluida) bateStatus = false;
         if (filtroStatusAtual === 'completed' && !isConcluida) bateStatus = false;
 
-        // 3. Só mostra se passar nos DOIS testes
         if (bateTexto && bateStatus) {
             card.style.display = 'flex'; 
         } else {
@@ -394,57 +415,170 @@ function aplicarFiltrosTasks() {
         }
     });
 }
+
 // ==========================================
-// 6. LÓGICA DE ARRASTAR E SOLTAR (DRAG & DROP)
+// 7. LÓGICA DE ARRASTAR E SOLTAR (DRAG & DROP)
 // ==========================================
+// 1. Quando você começa a arrastar
 function dragStart(event, taskId, titulo) {
+    console.log("Iniciando arraste da tarefa:", taskId);
     event.dataTransfer.setData("taskId", taskId);
     event.dataTransfer.setData("titulo", titulo);
+    
+    // Pequeno delay para o efeito visual de "fantasma" do card
     setTimeout(() => event.target.classList.add('dragging'), 0);
 }
 
+// 2. Avisa o navegador que pode soltar ali (Obrigatório!)
 function allowDrop(event) {
-    event.preventDefault();
+    event.preventDefault(); 
 }
 
-async function dropTask(event, novaSituacaoConcluida) {
+// 3. Quando você solta o card na nova coluna
+async function dropTask(event, novoStatusDaColuna) {
     event.preventDefault();
+    console.log("Soltando tarefa na coluna:", novoStatusDaColuna);
+
+    // Remove a classe de arraste de todos os cards
     document.querySelectorAll('.task-card').forEach(card => card.classList.remove('dragging'));
 
     const taskId = event.dataTransfer.getData("taskId");
     const titulo = event.dataTransfer.getData("titulo");
 
-    if (!taskId) return;
+    if (!taskId) {
+        console.error("Erro: ID da tarefa não encontrado no drop!");
+        return;
+    }
 
     try {
         const response = await fetch(`${API_URL}/tasks/${taskId}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}` 
             },
-            body: JSON.stringify({ titulo: titulo, concluida: novaSituacaoConcluida })
+            // IMPORTANTE: Mandamos o status e o titulo para satisfazer o @Valid do Java
+            body: JSON.stringify({ 
+                titulo: titulo, 
+                status: novoStatusDaColuna 
+            })
         });
 
         if (response.ok) {
-            carregarTasks();
+            console.log("Status atualizado com sucesso no banco!");
+            carregarTasks(); // Recarrega as colunas
         } else {
-            showToast("Erro ao mover a tarefa.", "error");
+            const erroTxt = await response.text();
+            console.error("O Java recusou o movimento:", erroTxt);
+            showToast("Erro ao mover: " + erroTxt, "error");
         }
     } catch (error) {
-        console.error("Erro no Drag & Drop:", error);
+        console.error("Erro na conexão ao tentar mover:", error);
     }
 }
 
 // ==========================================
-// 7. INICIALIZAÇÃO E EVENTOS DA PÁGINA
+// 8. LÓGICA DE COMENTÁRIOS NAS TAREFAS
+// ==========================================
+async function abrirModalComentarios(taskId, tituloTarefa) {
+    console.log("Abrindo chat para a tarefa:", taskId); 
+    
+    tarefaAtualComentariosId = taskId;
+    document.getElementById('modal-comments-title').innerText = `💬 Comentários: ${tituloTarefa}`;
+    
+    const overlay = document.getElementById('modal-overlay');
+    overlay.classList.remove('hidden');
+    overlay.style.display = 'flex';
+
+    const modalComments = document.getElementById('modal-comments');
+    modalComments.classList.remove('hidden');
+    modalComments.style.display = 'block'; 
+    
+    await carregarComentarios(taskId);
+}
+
+async function carregarComentarios(taskId) {
+    const list = document.getElementById('comments-list');
+    list.innerHTML = '<p style="color: var(--text-muted); text-align: center;">Carregando...</p>';
+
+    try {
+        const response = await fetch(`${API_URL}/tasks/${taskId}/comments`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (response.ok) {
+            const comentarios = await response.json();
+            list.innerHTML = '';
+            
+            if (comentarios.length === 0) {
+                list.innerHTML = '<p style="color: var(--text-muted); text-align: center; margin-top: 50px;">Nenhum comentário ainda. Seja o primeiro!</p>';
+                return;
+            }
+
+            comentarios.forEach(c => {
+                let dataFormatada = 'Agora';
+                if (c.dataCriacao) {
+                    const data = new Date(c.dataCriacao);
+                    dataFormatada = data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
+                }
+
+                const bubble = document.createElement('div');
+                bubble.className = 'comment-bubble';
+                bubble.innerHTML = `
+                    <div class="comment-text">${c.texto}</div>
+                    <span class="comment-date">${dataFormatada}</span>
+                `;
+                list.appendChild(bubble);
+            });
+            
+            list.scrollTop = list.scrollHeight;
+        } else {
+            list.innerHTML = '<p style="color: red;">Erro ao carregar comentários.</p>';
+        }
+    } catch (error) {
+        console.error("Erro:", error);
+    }
+}
+
+async function adicionarComentario() {
+    if (!tarefaAtualComentariosId) return;
+    
+    const inputTexto = document.getElementById('new-comment-text');
+    const texto = inputTexto.value.trim();
+    
+    if (!texto) {
+        showToast("O comentário não pode estar vazio!", "warning");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/tasks/${tarefaAtualComentariosId}/comments`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ texto: texto })
+        });
+        
+        if (response.ok) {
+            inputTexto.value = ''; 
+            await carregarComentarios(tarefaAtualComentariosId); 
+        } else {
+            showToast("Erro ao enviar comentário.", "error");
+        }
+    } catch (error) {
+        console.error("Erro ao enviar:", error);
+    }
+}
+
+// ==========================================
+// 9. INICIALIZAÇÃO DA PÁGINA (Executado ao final)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Carrega dados iniciais e ativa utilidades
     carregarWorkspaces();
-    configurarFiltroBusca();
+    configurarFiltroBusca(); 
 
-    // 2. Configura botões de clique
     const btnWS = document.getElementById('btn-create-workspace');
     if(btnWS) btnWS.onclick = criarWorkspace;
 
@@ -468,24 +602,25 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    // 3. Configura a tecla "Enter" nos inputs
+    const pressionouEnterProjeto = (event) => { if (event.key === 'Enter') criarWorkspace(); };
     const inputWsName = document.getElementById('new-workspace-name');
     const inputWsDesc = document.getElementById('new-workspace-desc');
-    const pressionouEnterProjeto = (event) => {
-        if (event.key === 'Enter') criarWorkspace();
-    };
-
     if (inputWsName) inputWsName.addEventListener('keypress', pressionouEnterProjeto);
     if (inputWsDesc) inputWsDesc.addEventListener('keypress', pressionouEnterProjeto);
 
     const inputTaskTitle = document.getElementById('new-task-title');
     if (inputTaskTitle) {
-        inputTaskTitle.addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') criarTask();
+        inputTaskTitle.addEventListener('keypress', (event) => { if (event.key === 'Enter') criarTask(); });
+    }
+    
+    // Escuta Enter para adicionar comentário (Agora dentro do bloco correto)
+    const inputComment = document.getElementById('new-comment-text');
+    if (inputComment) {
+        inputComment.addEventListener('keypress', (event) => {
+            if (event.key === 'Enter') adicionarComentario();
         });
     }
     
-    // 4. Verifica se o Modo Escuro estava salvo
     const temaSalvo = localStorage.getItem('omni_theme');
     if (temaSalvo === 'dark') {
         document.body.classList.add('dark-mode');

@@ -48,6 +48,9 @@
                 <div class="action-toolbar">
                     <input type="text" id="new-workspace-name" placeholder="Nome do Novo Projeto..." class="input-pro">
                     <input type="text" id="new-workspace-desc" placeholder="Descrição rápida..." class="input-pro">
+                    
+                    <input type="date" id="new-workspace-date" class="input-pro" title="Data de Entrega" style="max-width: 150px;">
+                    
                     <button id="btn-create-workspace" class="btn-primary" style="width: auto; white-space: nowrap;">+ Criar Projeto</button>
                 </div>
 
@@ -56,14 +59,34 @@
 
             <div id="view-tasks" class="view-container hidden">
                 <header class="view-header flex-between">
-                    <div style="display: flex; align-items: center; gap: 15px;">
-                        <button id="btn-back" class="btn-icon">&larr; Voltar</button>
-                        <h1 id="workspace-title" class="page-title" style="margin: 0;">Nome do Projeto</h1>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <button id="btn-back" class="btn-icon">&larr; Voltar</button>
+                            <h1 id="workspace-title" class="page-title" style="margin: 0;">Nome do Projeto</h1>
+                        </div>
+                        
+                        <div style="margin-left: 55px; width: 300px; max-width: 100%;">
+                            <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
+                                <span>Progresso do Projeto</span>
+                                <span id="progress-text" style="font-weight: bold;">0%</span>
+                            </div>
+                            <div style="width: 100%; height: 6px; background: rgba(127, 140, 141, 0.3); border-radius: 3px; overflow: hidden;">
+                                <div id="progress-bar" style="width: 0%; height: 100%; background: #2ecc71; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.5s ease;"></div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <div class="search-box">
-                        <span>🔍</span>
-                        <input type="text" id="task-search" placeholder="Buscar tarefa...">
+                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                        <div class="search-box">
+                            <span>🔍</span>
+                            <input type="text" id="task-search" placeholder="Buscar tarefa...">
+                        </div>
+                        
+                        <div class="filter-pills">
+                            <button class="filter-pill active" data-filter="all">Todas</button>
+                            <button class="filter-pill" data-filter="pending">Pendentes</button>
+                            <button class="filter-pill" data-filter="completed">Concluídas</button>
+                        </div>
                     </div>
                 </header>
 
@@ -72,31 +95,41 @@
                     <button id="btn-create-task" class="btn-primary" style="width: auto; background-color: #f1c40f; color: #333;">+ Adicionar Tarefa</button>
                 </div>
 
-                <div class="kanban-board">
+                <div class="kanban-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start;">
+                    
                     <div class="kanban-column" id="coluna-fazer">
-                        <div class="column-header">
-                            <h3>📌 A Fazer</h3>
+                        <div class="column-header" style="border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #e74c3c;">📌 A Fazer</h3>
                         </div>
-                        <div class="kanban-cards scrollable-column" id="tasks-fazer" ondragover="allowDrop(event)" ondrop="dropTask(event, false)">
-                            <p style="color: #777; font-size: 14px; text-align: center; margin-top: 20px;">Nenhuma tarefa pendente.</p>
+                        <div class="kanban-cards scrollable-column" id="tasks-fazer" ondragover="allowDrop(event)" ondrop="dropTask(event, 'PENDENTE')" style="min-height: 200px;">
+                        </div>
+                    </div>
+
+                    <div class="kanban-column" id="coluna-andamento">
+                        <div class="column-header" style="border-bottom: 3px solid #f39c12; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #f39c12;">⏳ Em Andamento</h3>
+                        </div>
+                        <div class="kanban-cards scrollable-column" id="tasks-andamento" ondragover="allowDrop(event)" ondrop="dropTask(event, 'ANDAMENTO')" style="min-height: 200px; padding-bottom: 50px;">
                         </div>
                     </div>
 
                     <div class="kanban-column" id="coluna-concluida">
-                        <div class="column-header">
-                            <h3>✅ Concluídas</h3>
+                        <div class="column-header" style="border-bottom: 3px solid #2ecc71; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #2ecc71;">✅ Concluídas</h3>
                         </div>
-                        <div class="kanban-cards scrollable-column" id="tasks-concluidas" ondragover="allowDrop(event)" ondrop="dropTask(event, true)">
+                        <div class="kanban-cards scrollable-column" id="tasks-concluidas" ondragover="allowDrop(event)" ondrop="dropTask(event, 'CONCLUIDO')" style="min-height: 200px;">
                         </div>
                     </div>
+
                 </div>
             </div>
 
         </main>
     </div>
 
-    <div id="modal-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(3px);">
-        <div id="modal-confirm" class="modal-box hidden">
+    <div id="modal-overlay" class="hidden" onclick="if(event.target === this) fecharModais()" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+        
+        <div id="modal-confirm" class="modal-box hidden" style="display: none;">
             <h3 id="modal-confirm-title">Tem certeza?</h3>
             <p id="modal-confirm-msg">Essa ação não pode ser desfeita.</p>
             <div class="modal-actions">
@@ -104,7 +137,8 @@
                 <button onclick="confirmarDelecaoModal()" class="btn-deletar" style="width: auto; height: auto;">Sim, Deletar</button>
             </div>
         </div>
-        <div id="modal-edit" class="modal-box hidden">
+
+        <div id="modal-edit" class="modal-box hidden" style="display: none;">
             <h3>✏️ Editar Projeto</h3>
             <label class="modal-label">Nome do Projeto:</label>
             <input type="text" id="modal-edit-name" class="input-pro" style="margin-bottom: 10px;">
@@ -115,9 +149,26 @@
                 <button onclick="confirmarEdicaoModal()" class="btn-concluir">Salvar Alterações</button>
             </div>
         </div>
-    </div>
-    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px;"></div>
 
+        <div id="modal-comments" class="hidden" style="display: none; width: 450px; max-width: 90%; background: #2c3e50; border-radius: 12px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10000; border: 1px solid #34495e;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #34495e; padding-bottom: 10px;">
+                <h3 id="modal-comments-title" style="margin: 0; color: #ecf0f1; font-size: 18px;">💬 Comentários</h3>
+                <span onclick="fecharModais()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: #e74c3c; line-height: 1;">&times;</span>
+            </div>
+            
+            <div id="comments-list" style="height: 300px; overflow-y: auto; background: #1a252f; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #0f161c;">
+                </div>
+
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="new-comment-text" placeholder="Digite aqui..." class="input-pro" style="flex: 1; background: #34495e; color: white; border: 1px solid #455a64;">
+                <button onclick="adicionarComentario()" class="btn-primary" style="padding: 10px 20px; background: #3498db; width: auto;">Enviar</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
     <script src="dashboard.js"></script>
+
 </body>
 </html>
