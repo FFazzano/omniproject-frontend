@@ -129,19 +129,31 @@ async function confirmarEdicaoModal() {
 // 4. LÓGICA DE PROJETOS (WORKSPACES)
 // ==========================================
 async function carregarWorkspaces() {
-    const list = document.getElementById('workspaces-list');
+    const listAtivos = document.getElementById('workspaces-list');
+    const listConcluidos = document.getElementById('completed-workspaces-list');
+    const listNotificacoes = document.getElementById('notifications-list');
+    
     try {
         const response = await fetch(`${API_URL}/workspaces`, { headers: { 'Authorization': `Bearer ${token}` } });
         if (response.ok) {
             const workspaces = await response.json();
-            list.innerHTML = '';
             
+            // Limpa todas as listas antes de preencher
+            if(listAtivos) listAtivos.innerHTML = '';
+            if(listConcluidos) listConcluidos.innerHTML = '';
+            if(listNotificacoes) listNotificacoes.innerHTML = '';
+            
+            let notificacoesCount = 0;
+            const hoje = new Date();
+            hoje.setHours(0,0,0,0); // Zera a hora para comparar só o dia
+
             if (workspaces.length === 0) {
-                list.innerHTML = '<p style="color: var(--text-muted);">Nenhum projeto encontrado. Crie um acima!</p>';
+                if(listAtivos) listAtivos.innerHTML = '<p style="color: var(--text-muted);">Nenhum projeto encontrado. Crie um acima!</p>';
                 return;
             }
             
             workspaces.forEach(ws => {
+                // --- FORMATAÇÃO DE DATAS ---
                 let dataCriacaoFormatada = 'N/A';
                 if (ws.dataCriacao) {
                     const data = new Date(ws.dataCriacao);
@@ -154,12 +166,39 @@ async function carregarWorkspaces() {
                     if(partes.length === 3) dataEntregaFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
                 }
 
-                // Lógica visual do botão Concluir
+                // --- SISTEMA DE NOTIFICAÇÕES (PRAZOS) ---
+                if (!ws.concluido && ws.dataEntrega) {
+                    const partes = ws.dataEntrega.split('-');
+                    const dataVencimento = new Date(partes[0], partes[1] - 1, partes[2]);
+                    
+                    // Calcula a diferença em dias
+                    const diffTempo = dataVencimento.getTime() - hoje.getTime();
+                    const diffDias = Math.ceil(diffTempo / (1000 * 3600 * 24));
+
+                    if (diffDias === 1) {
+                        // VENCE AMANHÃ!
+                        notificacoesCount++;
+                        if(listNotificacoes) listNotificacoes.innerHTML += `
+                            <div style="background: rgba(241, 196, 15, 0.1); border-left: 4px solid #f1c40f; padding: 15px; border-radius: 4px;">
+                                ⚠️ <strong>Atenção:</strong> O projeto <b>${ws.nome}</b> vence amanhã!
+                            </div>`;
+                        // Mostra o Toast na tela
+                        showToast(`O projeto "${ws.nome}" vence amanhã!`, 'warning');
+                    } else if (diffDias < 0) {
+                        // ESTÁ ATRASADO!
+                        notificacoesCount++;
+                        if(listNotificacoes) listNotificacoes.innerHTML += `
+                            <div style="background: rgba(231, 76, 60, 0.1); border-left: 4px solid #e74c3c; padding: 15px; border-radius: 4px;">
+                                ❌ <strong>Atrasado:</strong> O projeto <b>${ws.nome}</b> passou do prazo de entrega!
+                            </div>`;
+                    }
+                }
+
+                // --- CRIAÇÃO DO CARTÃO DO PROJETO ---
                 const textoConcluir = ws.concluido ? '↩ Reabrir' : '✔ Concluir';
                 const corConcluir = ws.concluido ? '#95a5a6' : '#2ecc71';
 
                 const div = document.createElement('div');
-                // Adiciona a classe 'concluido' se o Java disser que é true
                 div.className = `workspace-card ${ws.concluido ? 'concluido' : ''}`;
                 
                 div.innerHTML = `
@@ -175,13 +214,38 @@ async function carregarWorkspaces() {
                     
                     <div style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; gap: 10px;">
                         <button onclick="toggleConcluirWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: ${corConcluir}; height: 32px;">${textoConcluir}</button>
-                        
                         <button onclick="editarWorkspace(event, ${ws.id}, '${ws.nome.replace(/'/g, "\\'")}', '${(ws.descricao || '').replace(/'/g, "\\'")}')" class="btn-primary" style="background-color: #3498db; height: 32px;">✏️ Editar</button>
                         <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c; height: 32px;">🗑️ Deletar</button>
                     </div>
                 `;
-                list.appendChild(div);
+                
+                // --- SEPARAÇÃO DE ABAS ---
+                if (ws.concluido) {
+                    if(listConcluidos) listConcluidos.appendChild(div);
+                } else {
+                    if(listAtivos) listAtivos.appendChild(div);
+                }
             });
+
+            // Mostra se não tiver nenhum concluído
+            if (listConcluidos && listConcluidos.innerHTML === '') {
+                listConcluidos.innerHTML = '<p style="color: var(--text-muted);">Você ainda não possui projetos concluídos.</p>';
+            }
+            if (listNotificacoes && listNotificacoes.innerHTML === '') {
+                listNotificacoes.innerHTML = '<p style="color: var(--text-muted);">Tudo tranquilo! Nenhuma notificação no momento.</p>';
+            }
+
+            // Acende a bolinha vermelha se tiver notificação
+            const badge = document.getElementById('badge-notif');
+            if (badge) {
+                if (notificacoesCount > 0) {
+                    badge.innerText = notificacoesCount;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+
         }
     } catch (error) { 
         console.error("Erro ao carregar workspaces:", error); 
@@ -195,6 +259,21 @@ async function criarWorkspace() {
 
     if (!nome) { showToast("O nome do projeto é obrigatório!", "warning"); return; }
 
+    // --- A VALIDAÇÃO TEM QUE FICAR AQUI (ANTES DE MANDAR PRO JAVA) ---
+    if (dataEntrega) {
+        // Pega a data que o usuário digitou e ajusta o fuso horário
+        const dataEscolhida = new Date(dataEntrega + 'T00:00:00'); 
+        
+        // Pega a data de hoje e zera as horas para comparar apenas os dias
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        if (dataEscolhida < hoje) {
+            showToast("⚠️ O prazo final não pode ser no passado!", "warning");
+            return; // O 'return' aqui faz a função parar Imediatamente. O fetch lá embaixo nem chega a ser executado!
+        }
+    }
+    
     try {
         const response = await fetch(`${API_URL}/workspaces`, {
             method: 'POST',
@@ -579,6 +658,14 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarWorkspaces();
     configurarFiltroBusca(); 
 
+    // Bloqueia dias passados no calendário do novo projeto
+    const inputDate = document.getElementById('new-workspace-date');
+    if (inputDate) {
+        // Pega o dia de hoje no formato YYYY-MM-DD
+        const hojeString = new Date().toISOString().split('T')[0];
+        inputDate.setAttribute('min', hojeString);
+    }
+
     const btnWS = document.getElementById('btn-create-workspace');
     if(btnWS) btnWS.onclick = criarWorkspace;
 
@@ -627,3 +714,33 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.checkbox-theme').forEach(cb => cb.checked = true);
     }
 });
+
+// ==========================================
+// NAVEGAÇÃO ENTRE ABAS
+// ==========================================
+function mudarAba(abaDestino) {
+    // 1. Esconde todas as telas
+    document.getElementById('view-workspaces').classList.add('hidden');
+    document.getElementById('view-tasks').classList.add('hidden');
+    document.getElementById('view-completed').classList.add('hidden');
+    document.getElementById('view-notifications').classList.add('hidden');
+
+    // 2. Tira o "active" de todos os botões da sidebar
+    document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => btn.classList.remove('active'));
+
+    // 3. Mostra a tela certa e acende o botão certo
+    if (abaDestino === 'projetos') {
+        document.getElementById('view-workspaces').classList.remove('hidden');
+        document.getElementById('nav-projetos').classList.add('active');
+        carregarWorkspaces(); // Recarrega a lista
+    } else if (abaDestino === 'concluidos') {
+        document.getElementById('view-completed').classList.remove('hidden');
+        document.getElementById('nav-concluidos').classList.add('active');
+        carregarWorkspaces(); // Recarrega para preencher a aba de concluídos
+    } else if (abaDestino === 'notificacoes') {
+        document.getElementById('view-notifications').classList.remove('hidden');
+        document.getElementById('nav-notificacoes').classList.add('active');
+        // Esconde a bolinha vermelha porque você já "leu"
+        document.getElementById('badge-notif').style.display = 'none'; 
+    }
+}

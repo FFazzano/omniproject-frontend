@@ -16,7 +16,12 @@
             </div>
             
             <nav class="sidebar-nav">
-                <a href="#" class="nav-item active">📊 Meus Projetos</a>
+                <a href="#" id="nav-projetos" class="nav-item active" onclick="mudarAba('projetos')">📊 Meus Projetos</a>
+                <a href="#" id="nav-concluidos" class="nav-item" onclick="mudarAba('concluidos')">✅ Projetos Concluídos</a>
+                <a href="#" id="nav-notificacoes" class="nav-item" onclick="mudarAba('notificacoes')">
+                    🔔 Notificações 
+                    <span id="badge-notif" style="display: none; background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 11px; margin-left: auto; font-weight: bold;">0</span>
+                </a>
                 <a href="#" class="nav-item disabled">⚙️ Configurações</a> 
             </nav>
 
@@ -55,6 +60,27 @@
                 </div>
 
                 <div id="workspaces-list" class="projects-grid"></div>
+            </div>
+            
+            <div id="view-completed" class="view-container hidden">
+                <header class="view-header">
+                    <div>
+                        <h1 class="page-title">Projetos Concluídos</h1>
+                        <p class="page-subtitle">Seu histórico de glórias e projetos finalizados.</p>
+                    </div>
+                </header>
+                <div id="completed-workspaces-list" class="projects-grid"></div>
+            </div>
+
+            <div id="view-notifications" class="view-container hidden">
+                <header class="view-header">
+                    <div>
+                        <h1 class="page-title">Central de Notificações</h1>
+                        <p class="page-subtitle">Avisos de prazos e alertas do sistema.</p>
+                    </div>
+                </header>
+                <div id="notifications-list" style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                    </div>
             </div>
 
             <div id="view-tasks" class="view-container hidden">
