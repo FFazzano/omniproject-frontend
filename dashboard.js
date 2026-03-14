@@ -1,7 +1,7 @@
 // ==========================================
 // 1. CONFIGURAÇÕES GERAIS E SEGURANÇA
 // ==========================================
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://omniproject-api.onrender.com';
 const token = localStorage.getItem('token');
 let workspaceAtualId = null;
 let filtroStatusAtual = 'all'; // Estado do nosso Filtro Rápido (Pílulas)
@@ -215,6 +215,9 @@ async function carregarWorkspaces() {
                     <div style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; gap: 10px;">
                         <button onclick="toggleConcluirWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: ${corConcluir}; height: 32px;">${textoConcluir}</button>
                         <button onclick="editarWorkspace(event, ${ws.id}, '${ws.nome.replace(/'/g, "\\'")}', '${(ws.descricao || '').replace(/'/g, "\\'")}')" class="btn-primary" style="background-color: #3498db; height: 32px;">✏️ Editar</button>
+                        
+                        <button onclick="convidarAmigo(event, ${ws.id})" class="btn-primary" style="background-color: #9b59b6; height: 32px;">🤝 Convidar</button>
+                        
                         <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c; height: 32px;">🗑️ Deletar</button>
                     </div>
                 `;
@@ -713,6 +716,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.classList.add('dark-mode');
         document.querySelectorAll('.checkbox-theme').forEach(cb => cb.checked = true);
     }
+    
 });
 
 // ==========================================
@@ -742,5 +746,55 @@ function mudarAba(abaDestino) {
         document.getElementById('nav-notificacoes').classList.add('active');
         // Esconde a bolinha vermelha porque você já "leu"
         document.getElementById('badge-notif').style.display = 'none'; 
+    }
+}
+
+// ==========================================
+// SISTEMA DE CONVITES (MULTIPLAYER)
+// ==========================================
+// Abre a tela bonita e guarda o ID do projeto em um campo invisível
+function convidarAmigo(event, workspaceId) {
+    event.stopPropagation();
+    document.getElementById('convite-workspace-id').value = workspaceId;
+    document.getElementById('convite-email').value = ''; // Limpa o campo
+    document.getElementById('modal-convite').style.display = 'flex';
+}
+
+// Fecha a tela
+function fecharModalConvite() {
+    document.getElementById('modal-convite').style.display = 'none';
+}
+
+// Faz o envio de verdade para o Java
+async function enviarConviteReal() {
+    const workspaceId = document.getElementById('convite-workspace-id').value;
+    const emailConvidado = document.getElementById('convite-email').value;
+
+    if (!emailConvidado) {
+        showToast("⚠️ Digite um e-mail válido!", "warning");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_URL}/workspaces/${workspaceId}/convidar`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ email: emailConvidado })
+        });
+
+        const mensagemServidor = await response.text();
+
+        if (response.ok) {
+            showToast("✅ " + mensagemServidor, "success");
+            fecharModalConvite();
+        } else {
+            showToast("❌ " + mensagemServidor, "error");
+        }
+    } catch (error) {
+        console.error("Erro ao convidar:", error);
+        showToast("Erro de conexão.", "error");
     }
 }
