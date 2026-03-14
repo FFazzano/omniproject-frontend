@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:8080';
+const API_URL = 'https://omniproject-api.onrender.com';
 
 // 1. Função para trocar entre a tela de Login e a tela de Cadastro
 function alternarTelas() {
