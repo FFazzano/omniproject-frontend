@@ -50,11 +50,11 @@ const api = {
     async request(endpoint, options = {}) {
         const url = `${API_URL}${endpoint}`;
         const config = {
+            ...options,
             headers: {
                 'Authorization': `Bearer ${TOKEN}`,
                 ...options.headers
-            },
-            ...options
+            }
         };
 
         try {
