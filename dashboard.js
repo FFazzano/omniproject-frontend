@@ -464,6 +464,42 @@ async function toggleConcluirWorkspace(event, id) {
 }
 
 // ======================
+// LAYOUT DINÂMICO
+// ======================
+function garantirLayoutHistorico() {
+    const viewTasks = dom.get('view-tasks');
+    const activityList = dom.get('activity-list');
+    
+    // Se o histórico já existir no DOM, não faz nada para não duplicar
+    if (activityList || !viewTasks) return;
+
+    // Procura o Kanban Board existente
+    const kanbanBoard = viewTasks.querySelector('.kanban-board');
+    if (!kanbanBoard) return;
+
+    // Envolve o Kanban atual num layout flex para ficarem lado a lado
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = "display: flex; gap: 20px; align-items: flex-start; height: 100%;";
+
+    kanbanBoard.parentNode.insertBefore(wrapper, kanbanBoard);
+    wrapper.appendChild(kanbanBoard);
+    kanbanBoard.style.flex = "1";
+    kanbanBoard.style.overflowX = "auto";
+
+    // Injeta a Barra Lateral de Histórico
+    const sidebar = document.createElement('div');
+    sidebar.className = "activity-sidebar";
+    sidebar.style.cssText = "width: 320px; flex-shrink: 0; background: var(--card-bg); border-radius: 10px; padding: 20px; border: 1px solid var(--border-color); max-height: calc(100vh - 150px); display: flex; flex-direction: column;";
+    sidebar.innerHTML = `
+        <h3 style="color: var(--text-color); margin-bottom: 15px; font-size: 16px; display: flex; justify-content: space-between; align-items: center;">
+            Histórico <span id="activity-count" style="color: var(--text-muted); font-size: 13px; font-weight: normal;"></span>
+        </h3>
+        <div id="activity-list" class="scrollable-column" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-right: 5px;"></div>
+    `;
+    wrapper.appendChild(sidebar);
+}
+
+// ======================
 // TAREFAS
 // ======================
 async function abrirWorkspace(id, nome) {
@@ -477,6 +513,9 @@ async function abrirWorkspace(id, nome) {
     state.workspaceAtualId = id;
     dom.get('workspace-title').innerText = nome;
     dom.get('view-workspaces').classList.add('hidden');
+
+    garantirLayoutHistorico(); // Injeta o layout dinamicamente se faltar
+
     dom.get('view-tasks').classList.remove('hidden');
 
     // Carrega tarefas e histórico em paralelo
