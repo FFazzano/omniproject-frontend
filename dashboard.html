@@ -162,14 +162,14 @@
         </main>
     </div>
 
-    <div id="modal-overlay" class="hidden" onclick="if(event.target === this) fecharModais()" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div id="modal-overlay" class="hidden" onclick="if(event.target === this) modal.fechar()" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; display: none; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
         
         <div id="modal-confirm" class="modal-box hidden" style="display: none;">
             <h3 id="modal-confirm-title">Tem certeza?</h3>
             <p id="modal-confirm-msg">Essa ação não pode ser desfeita.</p>
             <div class="modal-actions">
-                <button onclick="fecharModais()" class="btn-desfazer">Cancelar</button>
-                <button onclick="confirmarDelecaoModal()" class="btn-deletar" style="width: auto; height: auto;">Sim, Deletar</button>
+                <button onclick="modal.fechar()" class="btn-desfazer">Cancelar</button>
+                <button onclick="confirmarDelecao()" class="btn-deletar" style="width: auto; height: auto;">Sim, Deletar</button>
             </div>
         </div>
 
@@ -180,15 +180,15 @@
             <label class="modal-label">Descrição:</label>
             <input type="text" id="modal-edit-desc" class="input-pro" style="margin-bottom: 20px;">
             <div class="modal-actions">
-                <button onclick="fecharModais()" class="btn-desfazer">Cancelar</button>
-                <button onclick="confirmarEdicaoModal()" class="btn-concluir">Salvar Alterações</button>
+                <button onclick="modal.fechar()" class="btn-desfazer">Cancelar</button>
+                <button onclick="confirmarEdicao()" class="btn-concluir">Salvar Alterações</button>
             </div>
         </div>
 
         <div id="modal-comments" class="hidden" style="display: none; width: 450px; max-width: 90%; background: #2c3e50; border-radius: 12px; padding: 25px; box-shadow: 0 15px 35px rgba(0,0,0,0.5); z-index: 10000; border: 1px solid #34495e;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #34495e; padding-bottom: 10px;">
                 <h3 id="modal-comments-title" style="margin: 0; color: #ecf0f1; font-size: 18px;">💬 Comentários</h3>
-                <span onclick="fecharModais()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: #e74c3c; line-height: 1;">&times;</span>
+                <span onclick="modal.fechar()" style="cursor: pointer; font-size: 28px; font-weight: bold; color: #e74c3c; line-height: 1;">&times;</span>
             </div>
             
             <div id="comments-list" style="height: 300px; overflow-y: auto; background: #1a252f; padding: 15px; border-radius: 8px; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid #0f161c;">
@@ -220,7 +220,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; justify-content: flex-end;">
-            <button onclick="fecharModalConvite()" class="btn-primary" style="background-color: #95a5a6;">Cancelar</button>
+            <button onclick="modal.fecharConvite()" class="btn-primary" style="background-color: #95a5a6;">Cancelar</button>
             <button onclick="enviarConviteReal()" class="btn-primary" style="background-color: #9b59b6;">Enviar Convite</button>
         </div>
     </div>
