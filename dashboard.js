@@ -216,8 +216,12 @@ async function confirmarDelecao() {
             return;
         }
 
-        const recarregar = state.tipoAcaoModal === 'workspace' ? carregarWorkspaces : carregarTasks;
-        recarregar();
+        if (state.tipoAcaoModal === 'workspace') {
+            await carregarWorkspaces();
+        } else {
+            await carregarTasks();
+            await carregarHistoricoAtividades(state.workspaceAtualId);
+        }
         mostrarToast('Item apagado com sucesso.', TipoToast.SUCCESS);
     } catch (error) {
         console.error('Erro:', error);
@@ -474,7 +478,12 @@ async function abrirWorkspace(id, nome) {
     dom.get('workspace-title').innerText = nome;
     dom.get('view-workspaces').classList.add('hidden');
     dom.get('view-tasks').classList.remove('hidden');
-    carregarTasks();
+
+    // Carrega tarefas e histórico em paralelo
+    await Promise.all([
+        carregarTasks(),
+        carregarHistoricoAtividades(id)
+    ]);
 }
 
 async function carregarTasks() {
@@ -580,7 +589,8 @@ async function criarTask() {
         }
 
         dom.get('new-task-title').value = '';
-        carregarTasks();
+        await carregarTasks();
+        await carregarHistoricoAtividades(state.workspaceAtualId);
         mostrarToast('Tarefa adicionada!', TipoToast.SUCCESS);
     } catch (error) {
         console.error(error);
@@ -594,7 +604,8 @@ async function mudarStatusTask(id, titulo, novoStatus) {
             body: JSON.stringify({ titulo, status: novoStatus })
         });
         if (response.ok) {
-            carregarTasks();
+            await carregarTasks();
+            await carregarHistoricoAtividades(state.workspaceAtualId);
         } else {
             mostrarToast('Erro ao atualizar a tarefa.', TipoToast.ERROR);
         }
@@ -678,7 +689,8 @@ async function dropTask(event, novoStatus) {
         });
 
         if (response.ok) {
-            carregarTasks();
+            await carregarTasks();
+            await carregarHistoricoAtividades(state.workspaceAtualId);
         } else {
             const erro = await response.text();
             console.error('Erro ao mover:', erro);
@@ -759,6 +771,120 @@ async function adicionarComentario() {
         await carregarComentarios(state.tarefaComentariosId);
     } catch (error) {
         console.error('Erro ao enviar:', error);
+    }
+}
+
+// ======================
+// HISTÓRICO DE ATIVIDADES
+// ======================
+
+const ACTIVITY_ICONS = {
+    'criou': '🆕',
+    'moveu': '➡️',
+    'excluiu': '🗑️',
+    'editou': '✏️',
+    'concluiu': '✅',
+    'reabriu': '↩️',
+    'convidou': '🤝',
+    'default': '📝'
+};
+
+function getActivityIcon(descricao) {
+    const lowerDesc = descricao.toLowerCase();
+    for (const [keyword, icon] of Object.entries(ACTIVITY_ICONS)) {
+        if (lowerDesc.includes(keyword)) return icon;
+    }
+    return ACTIVITY_ICONS.default;
+}
+
+function formatarDataAtividade(dataISO) {
+    if (!dataISO) return 'Agora';
+
+    const data = new Date(dataISO);
+    const agora = new Date();
+    const diffMs = agora - data;
+    const diffMin = Math.floor(diffMs / 60000);
+    const diffHoras = Math.floor(diffMs / 3600000);
+    const diffDias = Math.floor(diffMs / 86400000);
+
+    // Menos de 1 minuto
+    if (diffMin < 1) return 'Agora mesmo';
+    // Menos de 60 minutos
+    if (diffMin < 60) return `Há ${diffMin} min`;
+    // Menos de 24 horas
+    if (diffHoras < 24) return `Há ${diffHoras}h`;
+    // Ontem
+    if (diffDias === 1) return `Ontem às ${data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    // Menos de 7 dias
+    if (diffDias < 7) return `${data.toLocaleDateString('pt-BR', { weekday: 'long' })} às ${data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`;
+    // Data completa
+    return data.toLocaleDateString('pt-BR') + ' às ' + data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function carregarHistoricoAtividades(workspaceId) {
+    const activityList = document.getElementById('activity-list');
+    const activityCount = document.getElementById('activity-count');
+
+    if (!activityList) return;
+
+    activityList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Carregando histórico...</p>';
+
+    try {
+        const response = await fetch(`${API_URL}/workspaces/${workspaceId}/logs`, {
+            headers: { 'Authorization': `Bearer ${TOKEN}` }
+        });
+
+        if (!response.ok) {
+            activityList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Não foi possível carregar o histórico.</p>';
+            return;
+        }
+
+        const logs = await response.json();
+
+        if (activityCount) {
+            activityCount.textContent = logs.length > 0 ? `${logs.length} atividade${logs.length !== 1 ? 's' : ''}` : '';
+        }
+
+        if (logs.length === 0) {
+            activityList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Nenhuma atividade registrada ainda.</p>';
+            return;
+        }
+
+        activityList.innerHTML = '';
+
+        logs.forEach(log => {
+            const item = document.createElement('div');
+            item.style.cssText = `
+                display: flex;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px 15px;
+                border-bottom: 1px solid var(--border-color, #2c2c35);
+                transition: background-color 0.2s;
+            `;
+
+            item.addEventListener('mouseenter', () => item.style.backgroundColor = 'rgba(255,255,255,0.05)');
+            item.addEventListener('mouseleave', () => item.style.backgroundColor = 'transparent');
+
+            const icon = getActivityIcon(log.descricao);
+            const dataFormatada = formatarDataAtividade(log.dataHora);
+
+            item.innerHTML = `
+                <div style="font-size: 18px; flex-shrink: 0;">${icon}</div>
+                <div style="flex: 1; min-width: 0;">
+                    <p style="margin: 0; color: var(--text-primary, #f5f5f5); font-size: 14px; line-height: 1.4;">
+                        ${log.descricao}
+                    </p>
+                    <span style="font-size: 12px; color: var(--text-muted, #888);">${dataFormatada}</span>
+                </div>
+            `;
+
+            activityList.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+        activityList.innerHTML = '<p style="color: var(--text-muted); text-align: center; padding: 20px;">Erro ao carregar histórico.</p>';
     }
 }
 
