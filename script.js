@@ -1,115 +1,129 @@
 const API_URL = 'https://omniproject-api.onrender.com';
 
-// 1. Função para trocar entre a tela de Login e a tela de Cadastro
+const DOM = {
+    loginCard: () => document.getElementById('login-card'),
+    registerCard: () => document.getElementById('register-card'),
+    loginEmail: () => document.getElementById('login-email'),
+    loginPassword: () => document.getElementById('login-password'),
+    registerNome: () => document.getElementById('register-nome'),
+    registerEmail: () => document.getElementById('register-email'),
+    registerPassword: () => document.getElementById('register-password'),
+    registerConfirm: () => document.getElementById('register-confirm')
+};
+
+const Icones = {
+    VISIVEL: '👁️',
+    OCULTO: '🙈'
+};
+
 function alternarTelas() {
-    document.getElementById('login-card').classList.toggle('hidden');
-    document.getElementById('register-card').classList.toggle('hidden');
+    DOM.loginCard()?.classList.toggle('hidden');
+    DOM.registerCard()?.classList.toggle('hidden');
 }
 
-// 2. Função para o Olhinho (Mostrar/Esconder Senha)
 function togglePassword(inputId, iconElement) {
     const input = document.getElementById(inputId);
-    
-    if (input.type === 'password') {
-        input.type = 'text';
-        iconElement.innerText = '🙈'; 
-    } else {
-        input.type = 'password';
-        iconElement.innerText = '👁️'; 
-    }
+    if (!input) return;
+
+    const isPassword = input.type === 'password';
+    input.type = isPassword ? 'text' : 'password';
+    iconElement.innerText = isPassword ? Icones.OCULTO : Icones.VISIVEL;
 }
 
-// 3. Função para Fazer Login (Botão Entrar)
-async function fazerLogin() {
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-
-    if (!email || !password) {
-        alert("Por favor, preencha e-mail e senha!");
-        return;
+function validarCredenciais(email, password) {
+    if (!email?.trim() || !password?.trim()) {
+        alert('Por favor, preencha e-mail e senha!');
+        return false;
     }
+    return true;
+}
+
+async function fazerLogin() {
+    const email = DOM.loginEmail()?.value;
+    const password = DOM.loginPassword()?.value;
+
+    if (!validarCredenciais(email, password)) return;
 
     try {
         const response = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: email, senha: password })
+            body: JSON.stringify({ email, senha: password })
         });
 
-        if (response.ok) {
-            const data = await response.json();
-            localStorage.setItem('token', data.token); // Salva a chave de acesso
-            window.location.href = 'dashboard.html';   // Redireciona para o painel!
-        } else {
-            alert("E-mail ou senha incorretos.");
+        if (!response.ok) {
+            alert('E-mail ou senha incorretos.');
+            return;
         }
+
+        const data = await response.json();
+        localStorage.setItem('token', data.token);
+        window.location.href = 'dashboard.html';
     } catch (error) {
-        console.error("Erro na requisição:", error);
-        alert("Erro ao conectar com o servidor.");
+        console.error('Erro na requisição:', error);
+        alert('Erro ao conectar com o servidor.');
     }
 }
 
-// 4. Função para Fazer Cadastro (Botão Cadastrar)
-async function fazerCadastro() {
-    // Pegando todos os dados da tela (Agora com o Nome!)
-    const nome = document.getElementById('register-nome').value;
-    const email = document.getElementById('register-email').value;
-    const password = document.getElementById('register-password').value;
-    const confirmPassword = document.getElementById('register-confirm').value;
-
-    // VALIDAÇÃO UX: Senha e Confirmação são iguais?
+function validarCadastro(nome, email, password, confirmPassword) {
     if (password !== confirmPassword) {
-        alert("As senhas não coincidem! Verifique e tente novamente.");
-        return;
+        alert('As senhas não coincidem! Verifique e tente novamente.');
+        return false;
     }
 
-    // VALIDAÇÃO UX: Todos os campos estão preenchidos?
-    if (!nome || !email || !password) {
-        alert("Preencha todos os campos!");
-        return;
+    if (!nome?.trim() || !email?.trim() || !password?.trim()) {
+        alert('Preencha todos os campos!');
+        return false;
     }
+
+    return true;
+}
+
+function limparCamposCadastro() {
+    DOM.registerNome().value = '';
+    DOM.registerEmail().value = '';
+    DOM.registerPassword().value = '';
+    DOM.registerConfirm().value = '';
+}
+
+async function fazerCadastro() {
+    const nome = DOM.registerNome()?.value;
+    const email = DOM.registerEmail()?.value;
+    const password = DOM.registerPassword()?.value;
+    const confirmPassword = DOM.registerConfirm()?.value;
+
+    if (!validarCadastro(nome, email, password, confirmPassword)) return;
 
     try {
         const response = await fetch(`${API_URL}/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // A MÁGICA: Enviando o 'nome' no corpo da requisição!
-            body: JSON.stringify({ nome: nome, email: email, senha: password })
+            body: JSON.stringify({ nome, email, senha: password })
         });
 
-        if (response.ok) {
-            alert("Conta criada com sucesso! Faça login para entrar.");
-            alternarTelas(); // Volta pra tela de login automaticamente
-            
-            // Limpa os campos e preenche o e-mail no login
-            document.getElementById('login-email').value = email;
-            document.getElementById('register-nome').value = '';
-            document.getElementById('register-email').value = '';
-            document.getElementById('register-password').value = '';
-            document.getElementById('register-confirm').value = '';
-        } else {
-            alert("Erro ao criar conta. O e-mail já existe ou a senha é muito fraca.");
+        if (!response.ok) {
+            alert('Erro ao criar conta. O e-mail já existe ou a senha é muito fraca.');
+            return;
         }
+
+        alert('Conta criada com sucesso! Faça login para entrar.');
+        alternarTelas();
+        DOM.loginEmail().value = email;
+        limparCamposCadastro();
     } catch (error) {
-        console.error("Erro na requisição:", error);
-        alert("Erro ao conectar com o servidor.");
+        console.error('Erro na requisição:', error);
+        alert('Erro ao conectar com o servidor.');
     }
 }
 
-// 5. Acionando pelo botão Enter
-document.addEventListener('DOMContentLoaded', () => {
-    const inputLoginPassword = document.getElementById('login-password');
-    if (inputLoginPassword) {
-        inputLoginPassword.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fazerLogin();
-        });
-    }
-    
-    const inputRegisterConfirm = document.getElementById('register-confirm');
-    if (inputRegisterConfirm) {
-        inputRegisterConfirm.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') fazerCadastro();
-        });
-    }
-});
+function configurarTeclaEnter(inputId, callback) {
+    const input = document.getElementById(inputId);
+    input?.addEventListener('keypress', (event) => {
+        if (event.key === 'Enter') callback();
+    });
+}
 
+document.addEventListener('DOMContentLoaded', () => {
+    configurarTeclaEnter('login-password', fazerLogin);
+    configurarTeclaEnter('register-confirm', fazerCadastro);
+});
