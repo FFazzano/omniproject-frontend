@@ -709,6 +709,7 @@ async function dropTask(event, novoStatus) {
 async function abrirModalComentarios(taskId, tituloTarefa) {
     state.tarefaComentariosId = taskId;
     modal.abrirComentarios(tituloTarefa);
+    await carregarAnexos(taskId);
     await carregarComentarios(taskId);
 }
 
@@ -776,6 +777,59 @@ async function adicionarComentario() {
         await carregarComentarios(state.tarefaComentariosId);
     } catch (error) {
         console.error('Erro ao enviar:', error);
+    }
+}
+
+// ======================
+// ANEXOS DE ARQUIVOS
+// ======================
+async function enviarAnexo() {
+    if (!state.tarefaComentariosId) return;
+    
+    const fileInput = dom.get('file-upload');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        mostrarToast('Selecione um arquivo para enviar!', TipoToast.WARNING);
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await api.request(`/tasks/${state.tarefaComentariosId}/attachments`, {
+            method: 'POST',
+            body: formData // NOTA SÊNIOR: Não enviamos o Content-Type. O navegador cria o boundary!
+        });
+
+        if (!response.ok) throw new Error('Erro ao anexar arquivo');
+
+        mostrarToast('Arquivo anexado com sucesso!', TipoToast.SUCCESS);
+        fileInput.value = ''; // Limpa o input
+        await carregarAnexos(state.tarefaComentariosId);
+    } catch (error) {
+        mostrarToast('Falha no upload do arquivo.', TipoToast.ERROR);
+    }
+}
+
+async function carregarAnexos(taskId) {
+    const lista = dom.get('attachments-list');
+    lista.innerHTML = '';
+    try {
+        const response = await api.request(`/tasks/${taskId}/attachments`);
+        if (!response.ok) return;
+        
+        const anexos = await response.json();
+        anexos.forEach(anexo => {
+            lista.innerHTML += `
+                <a href="${API_URL}/attachments/${anexo.id}" target="_blank" title="Clique para baixar" 
+                   style="background: var(--primary-color); color: white; padding: 4px 10px; border-radius: 12px; text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 5px;">
+                    📎 ${anexo.fileName}
+                </a>`;
+        });
+    } catch (error) {
+        console.error('Erro ao carregar anexos:', error);
     }
 }
 
