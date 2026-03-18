@@ -457,3 +457,39 @@ body {
     border-radius: 8px; width: 400px; max-width: 90%;
     box-shadow: 0 5px 15px rgba(0,0,0,0.3);
 }
+
+/* ==========================================
+   13. PAINEL LATERAL DESLIZANTE (HISTÓRICO)
+========================================== */
+.history-drawer {
+    position: fixed; top: 0; right: -420px;
+    width: 400px; max-width: 100vw; height: 100vh;
+    background: var(--card-bg); box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+    z-index: 10001; transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex; flex-direction: column; border-left: 1px solid var(--border-color);
+}
+.history-drawer.open { right: 0; }
+
+.drawer-header {
+    padding: 20px; border-bottom: 1px solid var(--border-color);
+    display: flex; justify-content: space-between; align-items: center;
+}
+.drawer-header h3 { font-size: 16px; margin: 0; color: var(--text-color); }
+
+.drawer-content { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column;}
+
+.btn-close-drawer {
+    background: transparent; border: none; color: var(--danger-color);
+    font-size: 28px; cursor: pointer; line-height: 1; transition: 0.2s;
+}
+.btn-close-drawer:hover { transform: scale(1.2); }
+
+.drawer-overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5); z-index: 10000;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+    backdrop-filter: blur(3px);
+}
+.drawer-overlay.open {
+    opacity: 1; pointer-events: auto;
+}

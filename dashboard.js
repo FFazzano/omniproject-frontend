@@ -732,9 +732,12 @@ async function carregarComentarios(taskId) {
         }
 
         comentarios.forEach(c => {
+            // Captura o nome do usuário devolvido pela API (com fallbacks de segurança)
+            const nomeAutor = c.user?.nome || c.usuario?.nome || c.autor?.nome || 'Membro do Projeto';
             const bubble = document.createElement('div');
             bubble.className = 'comment-bubble';
             bubble.innerHTML = `
+                <div style="font-size: 11px; font-weight: bold; color: var(--primary-color); margin-bottom: 4px;">${nomeAutor}</div>
                 <div class="comment-text">${c.texto}</div>
                 <span class="comment-date">${formatador.dataComentario(c.dataCriacao)}</span>
             `;
@@ -779,6 +782,16 @@ async function adicionarComentario() {
 // ======================
 // HISTÓRICO DE ATIVIDADES
 // ======================
+
+function abrirHistorico() {
+    dom.get('history-drawer')?.classList.add('open');
+    dom.get('history-overlay')?.classList.add('open');
+}
+
+function fecharHistorico() {
+    dom.get('history-drawer')?.classList.remove('open');
+    dom.get('history-overlay')?.classList.remove('open');
+}
 
 const ACTIVITY_ICONS = {
     'criou': '🆕',

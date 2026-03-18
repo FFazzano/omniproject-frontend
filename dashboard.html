@@ -103,9 +103,12 @@
                     </div>
                     
                     <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
-                        <div class="search-box">
-                            <span>🔍</span>
-                            <input type="text" id="task-search" placeholder="Buscar tarefa...">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div class="search-box">
+                                <span>🔍</span>
+                                <input type="text" id="task-search" placeholder="Buscar tarefa...">
+                            </div>
+                            <button onclick="abrirHistorico()" class="btn-primary" style="background-color: #34495e; width: auto;"><span style="margin-right: 5px;">📜</span> Histórico</button>
                         </div>
                         
                         <div class="filter-pills">
@@ -121,42 +124,27 @@
                     <button id="btn-create-task" class="btn-primary" style="width: auto; background-color: #f1c40f; color: #333;">+ Adicionar Tarefa</button>
                 </div>
 
-                <div style="display: flex; gap: 20px; align-items: flex-start; height: 100%;">
-                    <div class="kanban-board" style="flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; overflow-x: auto;">
-                        
-                        <div class="kanban-column" id="coluna-fazer">
-                            <div class="column-header" style="border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #e74c3c;">📌 A Fazer</h3>
-                            </div>
-                            <div class="kanban-cards scrollable-column" id="tasks-fazer" ondragover="allowDrop(event)" ondrop="dropTask(event, 'PENDENTE')" style="min-height: 200px;"></div>
+                <div class="kanban-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; overflow-x: auto; height: 100%;">
+                    <div class="kanban-column" id="coluna-fazer">
+                        <div class="column-header" style="border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #e74c3c;">📌 A Fazer</h3>
                         </div>
-
-                        <div class="kanban-column" id="coluna-andamento">
-                            <div class="column-header" style="border-bottom: 3px solid #f39c12; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #f39c12;">⏳ Em Andamento</h3>
-                            </div>
-                            <div class="kanban-cards scrollable-column" id="tasks-andamento" ondragover="allowDrop(event)" ondrop="dropTask(event, 'ANDAMENTO')" style="min-height: 200px; padding-bottom: 50px;"></div>
-                        </div>
-
-                        <div class="kanban-column" id="coluna-concluida">
-                            <div class="column-header" style="border-bottom: 3px solid #2ecc71; padding-bottom: 10px; margin-bottom: 15px;">
-                                <h3 style="margin: 0; color: #2ecc71;">✅ Concluídas</h3>
-                            </div>
-                            <div class="kanban-cards scrollable-column" id="tasks-concluidas" ondragover="allowDrop(event)" ondrop="dropTask(event, 'CONCLUIDO')" style="min-height: 200px;"></div>
-                        </div>
+                        <div class="kanban-cards scrollable-column" id="tasks-fazer" ondragover="allowDrop(event)" ondrop="dropTask(event, 'PENDENTE')" style="min-height: 200px;"></div>
                     </div>
-
-                    <!-- SEÇÃO DE HISTÓRICO LADO A LADO -->
-                    <div id="activity-history-section" class="activity-sidebar" style="width: 320px; flex-shrink: 0; background: var(--card-bg); border-radius: 10px; padding: 20px; border: 1px solid var(--border-color); max-height: calc(100vh - 150px); display: flex; flex-direction: column;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">
-                            <h3 style="margin: 0; color: var(--text-color); font-size: 16px; display: flex; align-items: center; gap: 8px;">📜 Histórico</h3>
-                            <span id="activity-count" style="font-size: 12px; color: var(--text-muted);">Carregando...</span>
+                    <div class="kanban-column" id="coluna-andamento">
+                        <div class="column-header" style="border-bottom: 3px solid #f39c12; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #f39c12;">⏳ Em Andamento</h3>
                         </div>
-                        <div id="activity-list" class="scrollable-column" style="flex: 1; overflow-y: auto; display: flex; flex-direction: column; padding-right: 5px;">
-                            <p style="color: var(--text-muted); text-align: center; padding: 20px;">Carregando histórico...</p>
+                        <div class="kanban-cards scrollable-column" id="tasks-andamento" ondragover="allowDrop(event)" ondrop="dropTask(event, 'ANDAMENTO')" style="min-height: 200px; padding-bottom: 50px;"></div>
+                    </div>
+                    <div class="kanban-column" id="coluna-concluida">
+                        <div class="column-header" style="border-bottom: 3px solid #2ecc71; padding-bottom: 10px; margin-bottom: 15px;">
+                            <h3 style="margin: 0; color: #2ecc71;">✅ Concluídas</h3>
                         </div>
+                        <div class="kanban-cards scrollable-column" id="tasks-concluidas" ondragover="allowDrop(event)" ondrop="dropTask(event, 'CONCLUIDO')" style="min-height: 200px;"></div>
                     </div>
                 </div>
+
             </div>
 
         </main>
@@ -225,5 +213,19 @@
         </div>
     </div>
 </div>
+
+<!-- DRAWER DE HISTÓRICO -->
+<div id="history-overlay" class="drawer-overlay" onclick="fecharHistorico()"></div>
+<div id="history-drawer" class="history-drawer">
+    <div class="drawer-header">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <h3 style="margin: 0;">📜 Histórico</h3>
+            <span id="activity-count" style="font-size: 12px; color: var(--text-muted); font-weight: bold;"></span>
+        </div>
+        <button onclick="fecharHistorico()" class="btn-close-drawer">&times;</button>
+    </div>
+    <div id="activity-list" class="drawer-content scrollable-column"></div>
+</div>
+
 </body>
 </html>
