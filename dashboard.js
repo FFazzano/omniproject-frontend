@@ -831,10 +831,10 @@ async function carregarAnexos(taskId) {
         const anexos = await response.json();
         anexos.forEach(anexo => {
             lista.innerHTML += `
-                <a href="${API_URL}/attachments/${anexo.id}" target="_blank" title="Clique para baixar" 
-                   style="background: var(--primary-color); color: white; padding: 4px 10px; border-radius: 12px; text-decoration: none; font-size: 11px; display: inline-flex; align-items: center; gap: 5px;">
+                <button onclick="abrirAnexoSeguro(${anexo.id}, '${formatador.escaparHtml(anexo.fileName)}')" title="Clique para visualizar ou baixar" 
+                   style="background: var(--primary-color); color: white; padding: 4px 10px; border-radius: 12px; border: none; cursor: pointer; font-size: 11px; display: inline-flex; align-items: center; gap: 5px; font-family: inherit;">
                     📎 ${anexo.fileName}
-                </a>`;
+                </button>`;
         });
     } catch (error) {
         console.error('Erro ao carregar anexos:', error);
@@ -863,6 +863,36 @@ async function carregarAnexoProtegido(attachmentId, imgElementId) {
     } catch (error) {
         console.error('Erro ao carregar imagem:', error);
         mostrarToast('Não foi possível carregar a imagem anexa.', TipoToast.ERROR);
+    }
+}
+
+async function abrirAnexoSeguro(attachmentId, fileName = 'anexo') {
+    try {
+        // 1. Faz a requisição protegida
+        const response = await fetch(`${API_URL}/attachments/${attachmentId}`, {
+            headers: { 'Authorization': `Bearer ${TOKEN}` }
+        });
+
+        if (!response.ok) throw new Error('Erro ao carregar anexo protegido');
+
+        // 2. Converte a resposta binária em Blob (arquivo bruto)
+        const blob = await response.blob();
+        
+        // 3. Cria uma URL interna, provisória e segura que o navegador reconhece
+        const objectURL = URL.createObjectURL(blob);
+
+        // 4. Estratégia de Download / Nova Aba
+        const linkFantasma = document.createElement('a');
+        linkFantasma.href = objectURL;
+        linkFantasma.target = '_blank'; // Tenta abrir em nova aba
+        linkFantasma.download = fileName; // Força o download usando o nome real
+        linkFantasma.click(); // Simula o clique do usuário
+
+        // 5. Limpa a memória após 60 segundos
+        setTimeout(() => URL.revokeObjectURL(objectURL), 60000);
+    } catch (error) {
+        console.error('Erro ao abrir anexo:', error);
+        mostrarToast('Não foi possível baixar ou abrir o anexo.', TipoToast.ERROR);
     }
 }
 
