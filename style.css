@@ -189,7 +189,7 @@ body {
     display: flex; flex-direction: column; justify-content: space-between;
     transition: transform 0.2s, box-shadow 0.2s;
 }
-.workspace-card h3 { color: var(--text-color); font-size: 1.125rem; margin-bottom: 0.5rem; }
+.workspace-card h3 { color: var(--text-color); font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; }
 .workspace-card p { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem; line-height: 1.5; }
 
 /* Refatoração dos Botões do Projeto para Empilhar Corretamente */
@@ -236,9 +236,9 @@ body {
 
 .task-card {
     background: var(--card-bg); color: var(--text-color);
-    padding: 1rem; border-radius: 8px;
-    border-left: 4px solid #f1c40f;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    padding: 1.25rem; border-radius: 8px;
+    border-left: 5px solid #f1c40f;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     display: flex; flex-direction: column; gap: 15px;
     cursor: grab; transition: border-color 0.2s;
 }
@@ -246,7 +246,7 @@ body {
 .task-card.concluida { border-left-color: var(--success-color); opacity: 0.6; }
 
 .task-content { word-wrap: break-word; overflow-wrap: break-word; }
-.task-content h4 { margin: 0; font-size: 0.9375rem; line-height: 1.4; color: var(--text-color); }
+.task-content h4 { margin: 0; font-size: 1.05rem; font-weight: 600; line-height: 1.4; color: var(--text-color); }
 .texto-riscado { text-decoration: line-through; }
 
 .task-actions {
@@ -314,7 +314,8 @@ body {
     
     .sidebar-brand { padding: 10px; border: none; }
     .view-container { padding: 15px; }
-    .action-toolbar { flex-direction: column; align-items: stretch; }
+    .action-toolbar { flex-direction: column; align-items: stretch; padding: 15px; gap: 10px; margin-bottom: 1.5rem; }
+    .action-toolbar .input-pro { padding: 10px 15px; font-size: 14px; }
     .action-toolbar .btn-primary { width: 100% !important; }
     
     .view-header.flex-between { flex-direction: column; align-items: flex-start; gap: 20px;}
@@ -326,8 +327,10 @@ body {
     .search-box { max-width: 100%; }
     .filter-pills { overflow-x: auto; padding-bottom: 5px; }
     
-    /* Kanban mantém-se lado-a-lado, mas com scroll nativo (estilo Trello app) */
-    .kanban-column { min-width: 280px; width: 85vw; }
+    /* Kanban empilhado para melhor visualização no celular */
+    .kanban-board { flex-direction: column; overflow-x: hidden; padding-bottom: 30px; gap: 15px; }
+    .kanban-column { width: 100%; min-width: 100%; max-height: none; }
+    .scrollable-column { overflow-y: visible; max-height: none; }
 }
 
 /* ==========================================
