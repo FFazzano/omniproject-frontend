@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw } from 'lucide-react';
 import api from './api/api';
 import './App.css';
+import toast, { Toaster } from 'react-hot-toast';
 
 // --- COMPONENTE DE LOGIN ---
 const Login = () => {
@@ -22,7 +23,7 @@ const Login = () => {
       navigate('/dashboard'); // Redireciona para o dashboard após o sucesso
     } catch (err) {
       console.error('Erro ao fazer login:', err);
-      alert('Usuário ou senha incorretos');
+      toast.error('Usuário ou senha incorretos');
       setError('Não foi possível realizar o login.');
     }
   };
@@ -168,13 +169,16 @@ const Dashboard = () => {
       if (editingWorkspace) {
         const res = await api.put(`/workspaces/${editingWorkspace.id}`, payload);
         setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? res.data : ws));
+        toast.success('Projeto atualizado com sucesso!');
       } else {
         const res = await api.post('/workspaces', payload);
         setWorkspaces([...workspaces, res.data]);
+        toast.success('Projeto criado com sucesso!');
       }
       setIsWorkspaceModalOpen(false);
     } catch (err) {
       console.error('Erro ao salvar workspace:', err);
+      toast.error('Erro ao salvar o projeto.');
     }
   };
 
@@ -183,8 +187,10 @@ const Dashboard = () => {
     try {
       const res = await api.put(`/workspaces/${ws.id}/concluir`);
       setWorkspaces(workspaces.map(w => w.id === ws.id ? res.data : w));
+      toast.success(res.data.concluido ? 'Projeto concluído!' : 'Projeto reaberto!');
     } catch (err) {
       console.error('Erro ao concluir projeto:', err);
+      toast.error('Erro ao alterar o status do projeto.');
     }
   };
 
@@ -194,8 +200,10 @@ const Dashboard = () => {
       await api.delete(`/workspaces/${id}`);
       setWorkspaces(workspaces.filter(ws => ws.id !== id));
       if (currentWorkspace?.id === id) setCurrentWorkspace(null);
+      toast.success('Projeto excluído com sucesso!');
     } catch (err) {
       console.error('Erro ao deletar workspace:', err);
+      toast.error('Erro ao excluir o projeto.');
     }
   };
 
@@ -210,11 +218,11 @@ const Dashboard = () => {
     e.preventDefault();
     try {
       await api.post(`/workspaces/${workspaceToInvite.id}/convidar`, { email: inviteEmail });
-      alert('Convite enviado com sucesso!');
+      toast.success('Convite enviado com sucesso!');
       setIsInviteModalOpen(false);
     } catch (err) {
       console.error('Erro ao convidar:', err);
-      alert(err.response?.data || 'Erro ao enviar convite.');
+      toast.error(err.response?.data || 'Erro ao enviar convite.');
     }
   };
 
@@ -226,8 +234,10 @@ const Dashboard = () => {
       const res = await api.post('/tasks', payload);
       setTasks([...tasks, res.data]);
       setNewTaskTitle('');
+      toast.success('Tarefa adicionada!');
     } catch (err) {
       console.error('Erro ao criar tarefa:', err);
+      toast.error('Erro ao criar a tarefa.');
     }
   };
 
@@ -236,8 +246,10 @@ const Dashboard = () => {
       await api.delete(`/tasks/${taskId}`);
       setTasks(tasks.filter(t => t.id !== taskId));
       if (isHistoryOpen) carregarHistorico();
+      toast.success('Tarefa excluída!');
     } catch (err) {
       console.error('Erro ao deletar tarefa:', err);
+      toast.error('Erro ao excluir a tarefa.');
     }
   };
 
@@ -440,27 +452,45 @@ const Dashboard = () => {
                     <h3>Criar Novo Projeto</h3>
                   </div>
                 )}
-                {filteredWorkspaces.map(ws => (
-                  <div key={ws.id} className={`workspace-card-large ${ws.concluido ? 'concluido' : ''}`} onClick={() => setCurrentWorkspace(ws)}>
-                    <div className="ws-card-content">
-                      <Folder className="ws-icon" size={24} />
-                      <h3>{ws.nome}</h3>
-                      <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
-                      <div className="ws-dates">
-                        <span><Calendar size={14}/> Criado em: {ws.dataCriacao ? new Date(ws.dataCriacao).toLocaleDateString('pt-BR') : 'N/D'}</span>
-                        <span><Target size={14}/> Prazo: {ws.dataEntrega ? new Date(ws.dataEntrega).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                {filteredWorkspaces.map(ws => {
+                  // Cálculo Inteligente de Progresso da UI
+                  const tasksList = ws.tasks || [];
+                  const totalTasks = tasksList.length;
+                  const completedTasks = tasksList.filter(t => t.status === 'CONCLUIDA').length;
+                  const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+                  return (
+                    <div key={ws.id} className={`workspace-card-large ${ws.concluido ? 'concluido' : ''}`} onClick={() => setCurrentWorkspace(ws)}>
+                      <div className="ws-card-content">
+                        <Folder className="ws-icon" size={24} />
+                        <h3>{ws.nome}</h3>
+                        <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
+                        <div className="ws-dates">
+                          <span><Calendar size={14}/> Criado em: {ws.dataCriacao ? new Date(ws.dataCriacao).toLocaleDateString('pt-BR') : 'N/D'}</span>
+                          <span><Target size={14}/> Prazo: {ws.dataEntrega ? new Date(ws.dataEntrega).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                        </div>
+                        {/* Nova Barra de Progresso Visual */}
+                        <div className="ws-progress-section">
+                          <div className="progress-info">
+                            <span>Progresso das Tarefas</span>
+                            <span>{completedTasks}/{totalTasks} ({progress}%)</span>
+                          </div>
+                          <div className="progress-bar-bg">
+                            <div className="progress-bar-fill" style={{ width: `${progress}%` }}></div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="ws-actions-bar">
+                        <button className="action-btn" onClick={(e) => handleToggleWorkspaceStatus(e, ws)} title={ws.concluido ? "Reabrir Projeto" : "Concluir Projeto"}>
+                          {ws.concluido ? <RotateCcw size={16} /> : <CheckSquare size={16} />}
+                        </button>
+                        <button className="action-btn" onClick={(e) => handleOpenWorkspaceModal(e, ws)} title="Editar Projeto"><Edit size={16} /></button>
+                        <button className="action-btn" onClick={(e) => handleOpenInviteModal(e, ws)} title="Convidar Membro"><UserPlus size={16} /></button>
+                        <button className="action-btn danger" onClick={(e) => handleDeleteWorkspace(e, ws.id)} title="Excluir Projeto"><Trash2 size={16} /></button>
                       </div>
                     </div>
-                    <div className="ws-actions-bar">
-                      <button className="action-btn" onClick={(e) => handleToggleWorkspaceStatus(e, ws)} title={ws.concluido ? "Reabrir Projeto" : "Concluir Projeto"}>
-                        {ws.concluido ? <RotateCcw size={16} /> : <CheckSquare size={16} />}
-                      </button>
-                      <button className="action-btn" onClick={(e) => handleOpenWorkspaceModal(e, ws)} title="Editar Projeto"><Edit size={16} /></button>
-                      <button className="action-btn" onClick={(e) => handleOpenInviteModal(e, ws)} title="Convidar Membro"><UserPlus size={16} /></button>
-                      <button className="action-btn danger" onClick={(e) => handleDeleteWorkspace(e, ws.id)} title="Excluir Projeto"><Trash2 size={16} /></button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -656,22 +686,26 @@ const ProtectedRoute = ({ children }) => {
 // --- COMPONENTE PRINCIPAL (APP) ---
 function App() {
   return (
-    <Routes>
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
-      <Route path="/login" element={<Login />} />
-      
-      <Route 
-        path="/dashboard" 
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        } 
-      />
-      
-      {/* Catch-all para rotas não encontradas */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Login />} />
+        
+        <Route 
+          path="/dashboard" 
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Catch-all para rotas não encontradas */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+      {/* Injeta o provedor global de Toasts com uma UX clean e moderna */}
+      <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-color)' } }} />
+    </>
   );
 }
 
