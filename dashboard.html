@@ -91,7 +91,7 @@
                             <h1 id="workspace-title" class="page-title" style="margin: 0;">Nome do Projeto</h1>
                         </div>
                         
-                        <div style="margin-left: 55px; width: 300px; max-width: 100%;">
+                        <div class="project-progress-container" style="margin-left: 55px; width: 300px; max-width: 100%;">
                             <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">
                                 <span>Progresso do Projeto</span>
                                 <span id="progress-text" style="font-weight: bold;">0%</span>
@@ -102,8 +102,8 @@
                         </div>
                     </div>
                     
-                    <div style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
-                        <div style="display: flex; gap: 10px; align-items: center;">
+                    <div class="header-tools" style="display: flex; flex-direction: column; gap: 10px; align-items: flex-end;">
+                        <div class="header-tools-row" style="display: flex; gap: 10px; align-items: center;">
                             <div class="search-box">
                                 <span>🔍</span>
                                 <input type="text" id="task-search" placeholder="Buscar tarefa...">
@@ -124,7 +124,7 @@
                     <button id="btn-create-task" class="btn-primary" style="width: auto; background-color: #f1c40f; color: #333;">+ Adicionar Tarefa</button>
                 </div>
 
-                <div class="kanban-board" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: start; overflow-x: auto; height: 100%;">
+                <div class="kanban-board">
                     <div class="kanban-column" id="coluna-fazer">
                         <div class="column-header" style="border-bottom: 3px solid #e74c3c; padding-bottom: 10px; margin-bottom: 15px;">
                             <h3 style="margin: 0; color: #e74c3c;">📌 A Fazer</h3>
@@ -183,7 +183,7 @@
                 </div>
 
             <div style="display: flex; gap: 10px;">
-                <input type="text" id="new-comment-text" placeholder="Digite aqui..." class="input-pro" style="flex: 1; background: #34495e; color: white; border: 1px solid #455a64;">
+                <input type="text" id="new-comment-text" placeholder="Digite aqui..." class="input-pro" style="flex: 1;">
                 <button onclick="adicionarComentario()" class="btn-primary" style="padding: 10px 20px; background: #3498db; width: auto;">Enviar</button>
             </div>
         </div>
