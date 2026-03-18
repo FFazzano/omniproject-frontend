@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
@@ -118,6 +118,8 @@ const Dashboard = () => {
   const [workspaceToInvite, setWorkspaceToInvite] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') !== 'light');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [workspaceSearch, setWorkspaceSearch] = useState('');
+  const [taskSearch, setTaskSearch] = useState('');
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -244,7 +246,8 @@ const Dashboard = () => {
       const payload = { nome: newWorkspaceName, descricao: newWorkspaceDesc, dataEntrega: newWorkspaceDeadline || null };
       if (editingWorkspace) {
         const res = await api.put(`/workspaces/${editingWorkspace.id}`, payload);
-        setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? res.data : ws));
+        // FIX: Preserva as tarefas que já estavam carregadas no frontend
+        setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? { ...res.data, tasks: ws.tasks } : ws));
         toast.success('Projeto atualizado com sucesso!');
       } else {
         const res = await api.post('/workspaces', payload);
@@ -262,7 +265,8 @@ const Dashboard = () => {
     e.stopPropagation();
     try {
       const res = await api.put(`/workspaces/${ws.id}/concluir`);
-      setWorkspaces(workspaces.map(w => w.id === ws.id ? res.data : w));
+      // FIX: Preserva as tarefas na hora de atualizar o status do workspace
+      setWorkspaces(workspaces.map(w => w.id === ws.id ? { ...res.data, tasks: w.tasks } : w));
       toast.success(res.data.concluido ? 'Projeto concluído!' : 'Projeto reaberto!');
     } catch (err) {
       console.error('Erro ao concluir projeto:', err);
@@ -483,10 +487,16 @@ const Dashboard = () => {
   ];
 
   const filteredWorkspaces = workspaces.filter(ws => {
-    if (activeTab === 'ativos') return !ws.concluido;
-    if (activeTab === 'concluidos') return ws.concluido;
-    return true;
+    const matchesTab = activeTab === 'ativos' ? !ws.concluido : activeTab === 'concluidos' ? ws.concluido : true;
+    const matchesSearch = ws.nome.toLowerCase().includes(workspaceSearch.toLowerCase()) || 
+                          (ws.descricao && ws.descricao.toLowerCase().includes(workspaceSearch.toLowerCase()));
+    return matchesTab && matchesSearch;
   });
+
+  // Filtra as tarefas de acordo com a barra de pesquisa
+  const filteredTasks = tasks.filter(t => 
+    t.titulo.toLowerCase().includes(taskSearch.toLowerCase())
+  );
 
   return (
     <div className="app-layout">
@@ -551,8 +561,16 @@ const Dashboard = () => {
         {!currentWorkspace ? (
           <div className="lobby-container">
             <header className="lobby-header">
-              <h1>{activeTab === 'ativos' ? 'Projetos Ativos' : activeTab === 'concluidos' ? 'Projetos Concluídos' : 'Notificações'}</h1>
-              <p>{activeTab === 'notificacoes' ? 'Seus alertas e prazos próximos.' : 'Gerencie seus espaços de trabalho.'}</p>
+              <div className="lobby-header-texts">
+                <h1>{activeTab === 'ativos' ? 'Projetos Ativos' : activeTab === 'concluidos' ? 'Projetos Concluídos' : 'Notificações'}</h1>
+                <p>{activeTab === 'notificacoes' ? 'Seus alertas e prazos próximos.' : 'Gerencie seus espaços de trabalho.'}</p>
+              </div>
+              {activeTab !== 'notificacoes' && (
+                <div className="search-bar">
+                  <Search size={18} className="search-icon" />
+                  <input type="text" placeholder="Buscar projetos..." value={workspaceSearch} onChange={(e) => setWorkspaceSearch(e.target.value)} />
+                </div>
+              )}
             </header>
             
             {activeTab === 'notificacoes' ? (
@@ -624,9 +642,15 @@ const Dashboard = () => {
                 <h1>{currentWorkspace.nome}</h1>
                 <p className="tasks-subtitle">Gerencie suas tarefas deste projeto.</p>
               </div>
-              <button className="btn-secondary" onClick={openHistoryDrawer}>
-                <Activity size={18} /> Histórico
-              </button>
+              <div className="header-actions">
+                <div className="search-bar">
+                  <Search size={18} className="search-icon" />
+                  <input type="text" placeholder="Buscar tarefas..." value={taskSearch} onChange={(e) => setTaskSearch(e.target.value)} />
+                </div>
+                <button className="btn-secondary" onClick={openHistoryDrawer}>
+                  <Activity size={18} /> Histórico
+                </button>
+              </div>
             </header>
 
             <form onSubmit={handleCreateTask} className="create-task-form">
@@ -653,10 +677,10 @@ const Dashboard = () => {
                 >
                   <div className="column-header">
                     {col.icon} <h3>{col.title}</h3>
-                    <span className="task-count">{tasks.filter(t => t.status === col.id).length}</span>
+                      <span className="task-count">{filteredTasks.filter(t => t.status === col.id).length}</span>
                   </div>
                   <div className="scrollable-column">
-                    {tasks.filter(t => t.status === col.id).map(task => (
+                      {filteredTasks.filter(t => t.status === col.id).map(task => (
                       <div 
                         key={task.id} 
                         className="task-card"

@@ -344,6 +344,25 @@ input:checked + .slider:before {
   border-color: var(--danger);
 }
 
+/* --- SEARCH BAR --- */
+.search-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-bar .search-icon {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+}
+.search-bar input {
+  width: 260px;
+  padding: 10px 12px 10px 38px;
+  background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main);
+  border-radius: 8px; font-size: 14px; transition: 0.2s;
+}
+.search-bar input:focus { outline: none; border-color: var(--accent); width: 280px; }
+
 /* --- MAIN CONTENT (TAREFAS) --- */
 .main-content {
   flex: 1;
@@ -387,7 +406,13 @@ input:checked + .slider:before {
   min-height: 0; /* Gatilho essencial para o overflow-y funcionar */
   overflow-y: auto;
 }
-.lobby-header { margin-bottom: 32px; }
+.lobby-header { 
+  margin-bottom: 32px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  flex-wrap: wrap; gap: 16px;
+}
 .lobby-header h1 { font-size: 32px; color: var(--text-main); margin-bottom: 8px; }
 .lobby-header p { color: var(--text-muted); }
 
@@ -455,8 +480,10 @@ input:checked + .slider:before {
 .tasks-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .btn-secondary {
@@ -465,6 +492,12 @@ input:checked + .slider:before {
   border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; transition: 0.2s;
 }
 .btn-secondary:hover { background: var(--border-color); }
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
 .tasks-header h1 {
   font-size: 32px;
@@ -787,6 +820,16 @@ h4 { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-botto
   }
 
   /* Ajusta os cabeçalhos internos */
+  .tasks-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .search-bar, .search-bar input { width: 100%; }
+  .search-bar input:focus { width: 100%; }
+  .header-actions { width: 100%; flex-direction: column; }
+  
   .tasks-header {
     flex-direction: column;
     align-items: flex-start;
