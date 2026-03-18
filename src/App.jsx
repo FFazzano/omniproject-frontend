@@ -49,6 +49,8 @@ const Login = () => {
 // --- COMPONENTE DO DASHBOARD ---
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
+  const [hasWorkspaces, setHasWorkspaces] = useState(true);
+  const [currentWorkspace, setCurrentWorkspace] = useState(null);
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
@@ -57,20 +59,33 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    const carregarTarefas = async () => {
+    const carregarDados = async () => {
       try {
-        // Usando a rota que retorna a lista baseada no workspace (ajuste o ID caso precise)
-        const response = await api.get('/tasks/workspace/1');
-        setTasks(response.data);
+        // 1. Busca os workspaces do usuário logado
+        const wsResponse = await api.get('/workspaces');
+        const workspaces = wsResponse.data;
+
+        if (!workspaces || workspaces.length === 0) {
+          setHasWorkspaces(false);
+          return; // Interrompe a execução, pois não há workspaces
+        }
+
+        // 2. Pega o primeiro workspace retornado para carregar como principal
+        const primeiroWorkspace = workspaces[0];
+        setCurrentWorkspace(primeiroWorkspace);
+
+        // 3. Busca as tarefas usando o ID real dinâmico
+        const tasksResponse = await api.get(`/tasks/workspace/${primeiroWorkspace.id}`);
+        setTasks(tasksResponse.data);
       } catch (err) {
-        console.error('Erro ao buscar tarefas:', err);
+        console.error('Erro ao buscar dados do dashboard:', err);
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
-          console.error('Erro de permissão nas tarefas:', err);
+          console.error('Erro de permissão:', err);
           handleLogout();
         }
       }
     };
-    carregarTarefas();
+    carregarDados();
   }, [handleLogout]);
 
   return (
@@ -80,14 +95,22 @@ const Dashboard = () => {
         <button onClick={handleLogout} className="logout-button">🚪 Sair</button>
       </header>
       
-      <h3>Minhas Tarefas</h3>
-      <ul className="task-list">
-        {tasks.map(task => (
-          <li key={task.id} className="task-item">
-            <strong>{task.titulo}</strong> - <span className="task-status">{task.status}</span>
-          </li>
-        ))}
-      </ul>
+      {!hasWorkspaces ? (
+        <div className="empty-state">
+          <p>Você ainda não possui nenhum workspace.</p>
+        </div>
+      ) : (
+        <>
+          <h3>Minhas Tarefas {currentWorkspace && `- ${currentWorkspace.nome}`}</h3>
+          <ul className="task-list">
+            {tasks.map(task => (
+              <li key={task.id} className="task-item">
+                <strong>{task.titulo}</strong> - <span className="task-status">{task.status}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </div>
   );
 };
