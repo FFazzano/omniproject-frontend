@@ -1,22 +1,24 @@
 import axios from 'axios';
 
-// Criação da instância base apontando para o Render
+// O Vite injeta automaticamente o valor correto dependendo de como você roda o projeto
+// npm run dev -> pega do .env.development
+// npm run build -> pega do .env.production
 const api = axios.create({
-    baseURL: 'https://omniproject-api.onrender.com',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
 });
 
-// Interceptor de Requisição: Insere o Token automaticamente em todas as chamadas
+// Interceptor para injetar o token JWT em todas as requisições
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
 export default api;
