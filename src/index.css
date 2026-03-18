@@ -191,6 +191,10 @@ body {
   overflow: hidden;
 }
 
+.mobile-header { display: none; }
+.mobile-overlay { display: none; }
+.menu-button { background: transparent; border: none; padding: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+
 /* --- SIDEBAR --- */
 .sidebar {
   width: 280px;
@@ -707,3 +711,80 @@ h4 { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-botto
 .log-details span { font-size: 11px; color: var(--text-muted); }
 
 .empty-text { color: var(--text-muted); font-size: 13px; text-align: center; margin-top: 20px;}
+
+/* =========================================
+   MEDIA QUERIES (RESPONSIVIDADE - CELULARES)
+   ========================================= */
+@media (max-width: 768px) {
+  .app-layout {
+    flex-direction: column;
+  }
+
+  /* Exibe o cabeçalho no celular */
+  .mobile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    background: var(--bg-sidebar);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 30;
+  }
+
+  /* Transforma a Sidebar num Drawer Lateral Flutuante */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    height: 100vh;
+    z-index: 50;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 10px 0 30px rgba(0,0,0,0.5);
+  }
+
+  .sidebar.open {
+    left: 0;
+  }
+
+  /* Overlay escuro quando menu está aberto */
+  .mobile-overlay {
+    display: block;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 40;
+  }
+
+  /* Ajustes de grid e padding para caber na tela pequena */
+  .lobby-container, .tasks-container {
+    padding: 20px;
+  }
+
+  .workspaces-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Adapta os modais que eram lado a lado (Comentários e Anexos) */
+  .layout-split {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  
+  .comments-section {
+    border-right: none;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  /* Ajusta os cabeçalhos internos */
+  .tasks-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .tasks-header .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}

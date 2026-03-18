@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
@@ -117,6 +117,7 @@ const Dashboard = () => {
   const [inviteEmail, setInviteEmail] = useState('');
   const [workspaceToInvite, setWorkspaceToInvite] = useState(null);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') !== 'light');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -489,8 +490,22 @@ const Dashboard = () => {
 
   return (
     <div className="app-layout">
+      {/* HEADER MOBILE (Só aparece em telas pequenas) */}
+      <div className="mobile-header">
+        <div className="login-brand" style={{ marginBottom: 0 }}>
+          <LayoutDashboard className="brand-icon-large" size={24} />
+          <h2 style={{ fontSize: '20px' }}>OmniSaaS</h2>
+        </div>
+        <button className="menu-button" onClick={() => setIsMobileMenuOpen(true)}>
+          <Menu size={24} color="var(--text-main)" />
+        </button>
+      </div>
+
+      {/* OVERLAY MOBILE PARA FECHAR O MENU */}
+      {isMobileMenuOpen && <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
+
       {/* SIDEBAR - MENU LATERAL */}
-      <aside className="sidebar">
+      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
         <div className="sidebar-header">
           <LayoutDashboard className="brand-icon" size={24} />
           <h2>OmniSaaS</h2>
@@ -499,15 +514,15 @@ const Dashboard = () => {
         <div className="sidebar-nav">
           <p className="section-title">NAVEGAÇÃO</p>
           <ul className="nav-list">
-            <li className={`nav-item ${activeTab === 'ativos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('ativos'); setCurrentWorkspace(null); }}>
+            <li className={`nav-item ${activeTab === 'ativos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('ativos'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}>
               <LayoutDashboard size={18} />
               <span>Projetos Ativos</span>
             </li>
-            <li className={`nav-item ${activeTab === 'concluidos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('concluidos'); setCurrentWorkspace(null); }}>
+            <li className={`nav-item ${activeTab === 'concluidos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('concluidos'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}>
               <CheckSquare size={18} />
               <span>Concluídos</span>
             </li>
-            <li className={`nav-item ${activeTab === 'notificacoes' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); }}>
+            <li className={`nav-item ${activeTab === 'notificacoes' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}>
               <Bell size={18} />
               <span>Notificações</span>
               {notifications.length > 0 && <span className="notif-badge">{notifications.length}</span>}
