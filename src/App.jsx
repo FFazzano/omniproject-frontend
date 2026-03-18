@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 
@@ -54,9 +54,16 @@ const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [newWorkspaceDeadline, setNewWorkspaceDeadline] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
+  const [editingWorkspace, setEditingWorkspace] = useState(null);
+  const [activeTab, setActiveTab] = useState('ativos'); // ativos, concluidos, notificacoes
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [workspaceToInvite, setWorkspaceToInvite] = useState(null);
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') !== 'light');
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -90,6 +97,38 @@ const Dashboard = () => {
     carregarDados();
   }, [handleLogout]);
 
+  // Efeito do Theme Switch (Modo Escuro / Claro)
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  // Motor de Notificações
+  const notifications = useMemo(() => {
+    const newNotifs = [];
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    workspaces.filter(ws => !ws.concluido && ws.dataEntrega).forEach(ws => {
+      const entrega = new Date(ws.dataEntrega);
+      entrega.setMinutes(entrega.getMinutes() + entrega.getTimezoneOffset());
+      entrega.setHours(0, 0, 0, 0);
+      const diffDays = Math.ceil((entrega - hoje) / (1000 * 60 * 60 * 24));
+
+      if (diffDays < 0) {
+        newNotifs.push({ id: ws.id, type: 'danger', message: `O projeto "${ws.nome}" está ATRASADO! (Prazo: ${entrega.toLocaleDateString('pt-BR')})` });
+      } else if (diffDays <= 1) {
+        newNotifs.push({ id: ws.id, type: 'warning', message: `Atenção: O projeto "${ws.nome}" vence ${diffDays === 0 ? 'HOJE' : 'AMANHÃ'}!` });
+      }
+    });
+    return newNotifs;
+  }, [workspaces]);
+
   // Efeito para buscar as tarefas sempre que o Workspace atual mudar
   useEffect(() => {
     const carregarTarefas = async () => {
@@ -104,17 +143,47 @@ const Dashboard = () => {
     carregarTarefas();
   }, [currentWorkspace]);
 
-  const handleCreateWorkspace = async (e) => {
+  const handleOpenWorkspaceModal = (e, ws = null) => {
+    if (e) e.stopPropagation();
+    if (ws) {
+      setEditingWorkspace(ws);
+      setNewWorkspaceName(ws.nome);
+      setNewWorkspaceDesc(ws.descricao || '');
+      setNewWorkspaceDeadline(ws.dataEntrega ? ws.dataEntrega.split('T')[0] : '');
+    } else {
+      setEditingWorkspace(null);
+      setNewWorkspaceName('');
+      setNewWorkspaceDesc('');
+      setNewWorkspaceDeadline('');
+    }
+    setIsWorkspaceModalOpen(true);
+  };
+
+  const handleSaveWorkspace = async (e) => {
     e.preventDefault();
     if (!newWorkspaceName.trim()) return;
     try {
-      const res = await api.post('/workspaces', { nome: newWorkspaceName, descricao: newWorkspaceDesc });
-      setWorkspaces([...workspaces, res.data]);
-      setNewWorkspaceName('');
-      setNewWorkspaceDesc('');
+      const payload = { nome: newWorkspaceName, descricao: newWorkspaceDesc, dataEntrega: newWorkspaceDeadline || null };
+      if (editingWorkspace) {
+        const res = await api.put(`/workspaces/${editingWorkspace.id}`, payload);
+        setWorkspaces(workspaces.map(ws => ws.id === editingWorkspace.id ? res.data : ws));
+      } else {
+        const res = await api.post('/workspaces', payload);
+        setWorkspaces([...workspaces, res.data]);
+      }
       setIsWorkspaceModalOpen(false);
     } catch (err) {
-      console.error('Erro ao criar workspace:', err);
+      console.error('Erro ao salvar workspace:', err);
+    }
+  };
+
+  const handleToggleWorkspaceStatus = async (e, ws) => {
+    e.stopPropagation();
+    try {
+      const res = await api.put(`/workspaces/${ws.id}/concluir`);
+      setWorkspaces(workspaces.map(w => w.id === ws.id ? res.data : w));
+    } catch (err) {
+      console.error('Erro ao concluir projeto:', err);
     }
   };
 
@@ -126,6 +195,25 @@ const Dashboard = () => {
       if (currentWorkspace?.id === id) setCurrentWorkspace(null);
     } catch (err) {
       console.error('Erro ao deletar workspace:', err);
+    }
+  };
+
+  const handleOpenInviteModal = (e, ws) => {
+    e.stopPropagation();
+    setWorkspaceToInvite(ws);
+    setInviteEmail('');
+    setIsInviteModalOpen(true);
+  };
+
+  const handleSendInvite = async (e) => {
+    e.preventDefault();
+    try {
+      await api.post(`/workspaces/${workspaceToInvite.id}/convidar`, { email: inviteEmail });
+      alert('Convite enviado com sucesso!');
+      setIsInviteModalOpen(false);
+    } catch (err) {
+      console.error('Erro ao convidar:', err);
+      alert(err.response?.data || 'Erro ao enviar convite.');
     }
   };
 
@@ -262,6 +350,12 @@ const Dashboard = () => {
     { id: 'CONCLUIDA', title: 'Concluído', icon: <CheckCircle size={16} /> }
   ];
 
+  const filteredWorkspaces = workspaces.filter(ws => {
+    if (activeTab === 'ativos') return !ws.concluido;
+    if (activeTab === 'concluidos') return ws.concluido;
+    return true;
+  });
+
   return (
     <div className="app-layout">
       {/* SIDEBAR - MENU LATERAL */}
@@ -274,17 +368,31 @@ const Dashboard = () => {
         <div className="sidebar-nav">
           <p className="section-title">NAVEGAÇÃO</p>
           <ul className="nav-list">
-            <li 
-              className={`nav-item ${!currentWorkspace ? 'active' : ''}`}
-              onClick={() => setCurrentWorkspace(null)}
-            >
-              <Home size={18} />
-              <span>Meus Projetos</span>
+            <li className={`nav-item ${activeTab === 'ativos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('ativos'); setCurrentWorkspace(null); }}>
+              <LayoutDashboard size={18} />
+              <span>Projetos Ativos</span>
+            </li>
+            <li className={`nav-item ${activeTab === 'concluidos' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('concluidos'); setCurrentWorkspace(null); }}>
+              <CheckSquare size={18} />
+              <span>Concluídos</span>
+            </li>
+            <li className={`nav-item ${activeTab === 'notificacoes' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); }}>
+              <Bell size={18} />
+              <span>Notificações</span>
+              {notifications.length > 0 && <span className="notif-badge">{notifications.length}</span>}
             </li>
           </ul>
         </div>
 
         <div className="sidebar-footer">
+          <div className="theme-switch-wrapper">
+            <Sun size={18} className="theme-icon" color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+            <label className="ios-switch">
+              <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
+              <span className="slider"></span>
+            </label>
+            <Moon size={18} className="theme-icon" color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+          </div>
           <button onClick={handleLogout} className="logout-button">
             <LogOut size={18} />
             Sair da conta
@@ -297,30 +405,50 @@ const Dashboard = () => {
         {!currentWorkspace ? (
           <div className="lobby-container">
             <header className="lobby-header">
-              <h1>Meus Projetos</h1>
-              <p>Escolha um workspace para ver suas tarefas ou crie um novo.</p>
+              <h1>{activeTab === 'ativos' ? 'Projetos Ativos' : activeTab === 'concluidos' ? 'Projetos Concluídos' : 'Notificações'}</h1>
+              <p>{activeTab === 'notificacoes' ? 'Seus alertas e prazos próximos.' : 'Gerencie seus espaços de trabalho.'}</p>
             </header>
-            <div className="workspaces-grid">
-              <div className="workspace-card-large dashed" onClick={() => setIsWorkspaceModalOpen(true)}>
-                <Plus size={32} />
-                <h3>Criar Novo Projeto</h3>
+            
+            {activeTab === 'notificacoes' ? (
+              <div className="notifications-list">
+                {notifications.length === 0 ? <p className="empty-text">Você não possui alertas no momento.</p> : notifications.map((n, i) => (
+                  <div key={i} className={`notif-card ${n.type}`}>
+                    <Bell size={20} className={n.type === 'danger' ? 'icon-danger' : 'icon-warning'} />
+                    <p>{n.message}</p>
+                  </div>
+                ))}
               </div>
-              {workspaces.map(ws => (
-                <div key={ws.id} className="workspace-card-large" onClick={() => setCurrentWorkspace(ws)}>
-                  <div className="ws-card-content">
-                    <Folder className="ws-icon" size={24} />
-                    <h3>{ws.nome}</h3>
-                    <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
+            ) : (
+              <div className="workspaces-grid">
+                {activeTab === 'ativos' && (
+                  <div className="workspace-card-large dashed" onClick={(e) => handleOpenWorkspaceModal(e)}>
+                    <Plus size={32} />
+                    <h3>Criar Novo Projeto</h3>
                   </div>
-                  <div className="ws-card-actions">
-                    <span className="ws-status">{ws.concluido ? 'Concluído' : 'Em andamento'}</span>
-                    <button className="btn-icon-small danger" onClick={(e) => handleDeleteWorkspace(e, ws.id)} title="Excluir Projeto">
-                      <Trash2 size={16} />
-                    </button>
+                )}
+                {filteredWorkspaces.map(ws => (
+                  <div key={ws.id} className={`workspace-card-large ${ws.concluido ? 'concluido' : ''}`} onClick={() => setCurrentWorkspace(ws)}>
+                    <div className="ws-card-content">
+                      <Folder className="ws-icon" size={24} />
+                      <h3>{ws.nome}</h3>
+                      <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
+                      <div className="ws-dates">
+                        <span><Calendar size={14}/> Criado em: {ws.dataCriacao ? new Date(ws.dataCriacao).toLocaleDateString('pt-BR') : 'N/D'}</span>
+                        <span><Target size={14}/> Prazo: {ws.dataEntrega ? new Date(ws.dataEntrega).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                      </div>
+                    </div>
+                    <div className="ws-actions-bar">
+                      <button className="action-btn" onClick={(e) => handleToggleWorkspaceStatus(e, ws)} title={ws.concluido ? "Reabrir Projeto" : "Concluir Projeto"}>
+                        {ws.concluido ? <RotateCcw size={16} /> : <CheckSquare size={16} />}
+                      </button>
+                      <button className="action-btn" onClick={(e) => handleOpenWorkspaceModal(e, ws)} title="Editar Projeto"><Edit size={16} /></button>
+                      <button className="action-btn" onClick={(e) => handleOpenInviteModal(e, ws)} title="Convidar Membro"><UserPlus size={16} /></button>
+                      <button className="action-btn danger" onClick={(e) => handleDeleteWorkspace(e, ws.id)} title="Excluir Projeto"><Trash2 size={16} /></button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className="tasks-container">
@@ -465,14 +593,34 @@ const Dashboard = () => {
         <div className="modal-overlay" onClick={() => setIsWorkspaceModalOpen(false)}>
           <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
             <header className="modal-header">
-              <h3>Criar Novo Projeto</h3>
+              <h3>{editingWorkspace ? 'Editar Projeto' : 'Criar Novo Projeto'}</h3>
               <button className="close-btn" onClick={() => setIsWorkspaceModalOpen(false)}><X size={20}/></button>
             </header>
             <div className="modal-body p-24">
-              <form onSubmit={handleCreateWorkspace} className="standard-form">
+              <form onSubmit={handleSaveWorkspace} className="standard-form">
                 <input type="text" placeholder="Nome do Projeto (Ex: Sprint Q3)" value={newWorkspaceName} onChange={e => setNewWorkspaceName(e.target.value)} required />
                 <textarea placeholder="Descrição (Opcional)" value={newWorkspaceDesc} onChange={e => setNewWorkspaceDesc(e.target.value)} rows={3}></textarea>
-                <button type="submit" disabled={!newWorkspaceName.trim()}>Criar Projeto</button>
+                <label className="input-label"><Calendar size={14}/> Data de Entrega (Opcional):</label>
+                <input type="date" value={newWorkspaceDeadline} onChange={e => setNewWorkspaceDeadline(e.target.value)} />
+                <button type="submit" disabled={!newWorkspaceName.trim()}>Salvar Projeto</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CONVIDAR USUÁRIO */}
+      {isInviteModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsInviteModalOpen(false)}>
+          <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
+            <header className="modal-header">
+              <h3>Convidar Membro</h3>
+              <button className="close-btn" onClick={() => setIsInviteModalOpen(false)}><X size={20}/></button>
+            </header>
+            <div className="modal-body p-24">
+              <form onSubmit={handleSendInvite} className="standard-form">
+                <input type="email" placeholder="E-mail do usuário" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required />
+                <button type="submit" disabled={!inviteEmail.trim()}>Enviar Convite</button>
               </form>
             </div>
           </div>
