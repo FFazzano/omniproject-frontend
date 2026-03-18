@@ -399,13 +399,14 @@ const Dashboard = () => {
         </div>
 
         <div className="sidebar-footer">
-          <button onClick={() => setIsDarkMode(!isDarkMode)} className="theme-toggle-button">
-            {isDarkMode ? (
-              <><Sun size={18} /> Modo Claro</>
-            ) : (
-              <><Moon size={18} /> Modo Escuro</>
-            )}
-          </button>
+          <div className="theme-switch-wrapper">
+            <Sun size={18} color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+            <label className="theme-switch">
+              <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
+              <span className="slider"></span>
+            </label>
+            <Moon size={18} color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+          </div>
           <button onClick={handleLogout} className="logout-button">
             <LogOut size={18} />
             Sair da conta
