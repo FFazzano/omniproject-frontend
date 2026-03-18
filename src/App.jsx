@@ -243,6 +243,14 @@ const Dashboard = () => {
       setTasks([...tasks, res.data]);
       setNewTaskTitle('');
       toast.success('Tarefa adicionada!');
+
+      // Sincroniza a criação da tarefa com o estado do Lobby para a barra de progresso
+      setWorkspaces(prev => prev.map(ws => {
+        if (ws.id === currentWorkspace.id) {
+          return { ...ws, tasks: [...(ws.tasks || []), res.data] };
+        }
+        return ws;
+      }));
     } catch (err) {
       console.error('Erro ao criar tarefa:', err);
       toast.error('Erro ao criar a tarefa.');
@@ -255,6 +263,14 @@ const Dashboard = () => {
       setTasks(tasks.filter(t => t.id !== taskId));
       if (isHistoryOpen) carregarHistorico();
       toast.success('Tarefa excluída!');
+
+      // Sincroniza a exclusão da tarefa com o estado do Lobby
+      setWorkspaces(prev => prev.map(ws => {
+        if (ws.id === currentWorkspace.id) {
+          return { ...ws, tasks: (ws.tasks || []).filter(t => t.id !== taskId) };
+        }
+        return ws;
+      }));
     } catch (err) {
       console.error('Erro ao deletar tarefa:', err);
       toast.error('Erro ao excluir a tarefa.');
@@ -277,8 +293,22 @@ const Dashboard = () => {
     
     setTasks(prev => prev.map(t => t.id === parseInt(taskId) ? { ...t, status: newStatus } : t));
 
+    // Sincroniza o movimento da tarefa com o estado do Lobby em tempo real
+    setWorkspaces(prevWorkspaces => prevWorkspaces.map(ws => {
+      if (ws.id === currentWorkspace.id) {
+        const updatedTasks = (ws.tasks || []).map(t => t.id === parseInt(taskId) ? { ...t, status: newStatus } : t);
+        return { ...ws, tasks: updatedTasks };
+      }
+      return ws;
+    }));
+
     try {
-      await api.put(`/tasks/${taskId}`, { status: newStatus });
+      // Envia os campos obrigatórios para satisfazer as validações (@Valid) do Backend
+      await api.put(`/tasks/${taskId}`, { 
+        titulo: taskToUpdate.titulo, 
+        descricao: taskToUpdate.descricao || '', 
+        status: newStatus 
+      });
       if (isHistoryOpen) carregarHistorico();
     } catch (err) {
       console.error('Erro ao mover tarefa:', err);
@@ -465,7 +495,7 @@ const Dashboard = () => {
                   const tasksList = ws.tasks || [];
                   const totalTasks = tasksList.length;
                   const completedTasks = tasksList.filter(t => t.status === 'CONCLUIDA').length;
-                  const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+                  const progress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
                   return (
                     <div key={ws.id} className={`workspace-card-large ${ws.concluido ? 'concluido' : ''}`} onClick={() => setCurrentWorkspace(ws)}>
