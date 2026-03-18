@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 
@@ -55,6 +55,8 @@ const Dashboard = () => {
   const [currentWorkspace, setCurrentWorkspace] = useState(null);
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
+  const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -77,10 +79,6 @@ const Dashboard = () => {
         const wsResponse = await api.get('/workspaces');
         const workspacesData = wsResponse.data;
         setWorkspaces(workspacesData);
-
-        if (workspacesData.length > 0) {
-          setCurrentWorkspace(workspacesData[0]);
-        }
       } catch (err) {
         console.error('Erro ao buscar workspaces:', err);
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -110,12 +108,24 @@ const Dashboard = () => {
     e.preventDefault();
     if (!newWorkspaceName.trim()) return;
     try {
-      const res = await api.post('/workspaces', { nome: newWorkspaceName, descricao: '' });
+      const res = await api.post('/workspaces', { nome: newWorkspaceName, descricao: newWorkspaceDesc });
       setWorkspaces([...workspaces, res.data]);
-      setCurrentWorkspace(res.data);
       setNewWorkspaceName('');
+      setNewWorkspaceDesc('');
+      setIsWorkspaceModalOpen(false);
     } catch (err) {
       console.error('Erro ao criar workspace:', err);
+    }
+  };
+
+  const handleDeleteWorkspace = async (e, id) => {
+    e.stopPropagation(); // Evita que o clique entre no workspace
+    try {
+      await api.delete(`/workspaces/${id}`);
+      setWorkspaces(workspaces.filter(ws => ws.id !== id));
+      if (currentWorkspace?.id === id) setCurrentWorkspace(null);
+    } catch (err) {
+      console.error('Erro ao deletar workspace:', err);
     }
   };
 
@@ -261,32 +271,17 @@ const Dashboard = () => {
           <h2>OmniSaaS</h2>
         </div>
 
-        <div className="workspaces-section">
-          <p className="section-title">MEUS WORKSPACES</p>
-          <ul className="workspace-list">
-            {workspaces.map(ws => (
-              <li 
-                key={ws.id} 
-                className={`workspace-item ${currentWorkspace?.id === ws.id ? 'active' : ''}`}
-                onClick={() => setCurrentWorkspace(ws)}
-              >
-                <Folder size={18} />
-                <span>{ws.nome}</span>
-              </li>
-            ))}
+        <div className="sidebar-nav">
+          <p className="section-title">NAVEGAÇÃO</p>
+          <ul className="nav-list">
+            <li 
+              className={`nav-item ${!currentWorkspace ? 'active' : ''}`}
+              onClick={() => setCurrentWorkspace(null)}
+            >
+              <Home size={18} />
+              <span>Meus Projetos</span>
+            </li>
           </ul>
-
-          <form onSubmit={handleCreateWorkspace} className="create-workspace-form">
-            <input 
-              type="text" 
-              placeholder="Novo workspace..." 
-              value={newWorkspaceName} 
-              onChange={e => setNewWorkspaceName(e.target.value)} 
-            />
-            <button type="submit" disabled={!newWorkspaceName.trim()}>
-              <Plus size={18} />
-            </button>
-          </form>
         </div>
 
         <div className="sidebar-footer">
@@ -300,14 +295,40 @@ const Dashboard = () => {
       {/* MAIN CONTENT - ÁREA DE TAREFAS */}
       <main className="main-content">
         {!currentWorkspace ? (
-          <div className="empty-state">
-            <h3>Bem-vindo ao OmniProject!</h3>
-            <p>Crie ou selecione um Workspace no menu lateral para começar.</p>
+          <div className="lobby-container">
+            <header className="lobby-header">
+              <h1>Meus Projetos</h1>
+              <p>Escolha um workspace para ver suas tarefas ou crie um novo.</p>
+            </header>
+            <div className="workspaces-grid">
+              <div className="workspace-card-large dashed" onClick={() => setIsWorkspaceModalOpen(true)}>
+                <Plus size={32} />
+                <h3>Criar Novo Projeto</h3>
+              </div>
+              {workspaces.map(ws => (
+                <div key={ws.id} className="workspace-card-large" onClick={() => setCurrentWorkspace(ws)}>
+                  <div className="ws-card-content">
+                    <Folder className="ws-icon" size={24} />
+                    <h3>{ws.nome}</h3>
+                    <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
+                  </div>
+                  <div className="ws-card-actions">
+                    <span className="ws-status">{ws.concluido ? 'Concluído' : 'Em andamento'}</span>
+                    <button className="btn-icon-small danger" onClick={(e) => handleDeleteWorkspace(e, ws.id)} title="Excluir Projeto">
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="tasks-container">
             <header className="tasks-header">
               <div className="header-title-group">
+                <button className="btn-back" onClick={() => setCurrentWorkspace(null)}>
+                  <ArrowLeft size={16} /> Voltar para Projetos
+                </button>
                 <h1>{currentWorkspace.nome}</h1>
                 <p className="tasks-subtitle">Gerencie suas tarefas deste projeto.</p>
               </div>
@@ -438,6 +459,25 @@ const Dashboard = () => {
           )}
         </div>
       </div>
+
+      {/* MODAL DE CRIAR WORKSPACE */}
+      {isWorkspaceModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsWorkspaceModalOpen(false)}>
+          <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
+            <header className="modal-header">
+              <h3>Criar Novo Projeto</h3>
+              <button className="close-btn" onClick={() => setIsWorkspaceModalOpen(false)}><X size={20}/></button>
+            </header>
+            <div className="modal-body p-24">
+              <form onSubmit={handleCreateWorkspace} className="standard-form">
+                <input type="text" placeholder="Nome do Projeto (Ex: Sprint Q3)" value={newWorkspaceName} onChange={e => setNewWorkspaceName(e.target.value)} required />
+                <textarea placeholder="Descrição (Opcional)" value={newWorkspaceDesc} onChange={e => setNewWorkspaceDesc(e.target.value)} rows={3}></textarea>
+                <button type="submit" disabled={!newWorkspaceName.trim()}>Criar Projeto</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
