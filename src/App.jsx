@@ -13,13 +13,18 @@ const Login = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      // Payload exato esperado pelo backend Spring Boot (email e senha)
       const response = await api.post('/auth/login', { email, senha: password });
       const token = response.data.token;
       localStorage.setItem('token', token);
       navigate('/dashboard'); // Redireciona para o dashboard após o sucesso
     } catch (err) {
       console.error('Erro ao fazer login:', err);
-      setError('Falha no login. Verifique suas credenciais.');
+      if (err.response) {
+        setError('Usuário ou senha inválidos.');
+      } else {
+        setError('Erro de conexão com o servidor.');
+      }
     }
   };
 
@@ -39,12 +44,12 @@ const Login = () => {
 // --- COMPONENTE DO DASHBOARD ---
 const Dashboard = () => {
   const [tasks, setTasks] = useState([]);
-  const navigate = useNavigate();
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
-    navigate('/login');
-  }, [navigate]);
+    // Recarrega a página forçando a limpeza do estado de memória e redirecionando
+    window.location.href = '/login';
+  }, []);
 
   useEffect(() => {
     const carregarTarefas = async () => {
