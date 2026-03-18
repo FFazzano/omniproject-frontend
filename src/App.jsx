@@ -95,7 +95,23 @@ const Dashboard = () => {
       try {
         const wsResponse = await api.get('/workspaces');
         const workspacesData = wsResponse.data;
-        setWorkspaces(workspacesData);
+        
+        // SOLUÇÃO: Hidratação das Tarefas
+        // Como o backend omite as tarefas (@JsonIgnore), buscamos as tarefas 
+        // de cada projeto em paralelo para a barra de progresso funcionar no Lobby.
+        const workspacesComTarefas = await Promise.all(
+          workspacesData.map(async (ws) => {
+            try {
+              const tasksRes = await api.get(`/tasks/workspace/${ws.id}`);
+              return { ...ws, tasks: tasksRes.data };
+            } catch (err) {
+              console.error(`Erro ao buscar tarefas do workspace ${ws.id}:`, err);
+              return { ...ws, tasks: [] };
+            }
+          })
+        );
+
+        setWorkspaces(workspacesComTarefas);
       } catch (err) {
         console.error('Erro ao buscar workspaces:', err);
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
