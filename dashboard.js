@@ -842,6 +842,31 @@ async function carregarAnexos(taskId) {
 }
 
 // ======================
+// VISUALIZADOR DE ANEXOS PROTEGIDOS
+// ======================
+async function carregarAnexoProtegido(attachmentId, imgElementId) {
+    try {
+        const response = await fetch(`${API_URL}/attachments/${attachmentId}`, {
+            headers: { 'Authorization': `Bearer ${TOKEN}` }
+        });
+
+        if (!response.ok) throw new Error('Erro ao carregar anexo protegido');
+
+        const blob = await response.blob();
+        const objectURL = URL.createObjectURL(blob); // Transforma os bytes em um link local provisório
+
+        const imgElement = dom.get(imgElementId);
+        if (imgElement) {
+            imgElement.src = objectURL;
+            imgElement.style.display = 'block'; // Mostra a imagem na tela
+        }
+    } catch (error) {
+        console.error('Erro ao carregar imagem:', error);
+        mostrarToast('Não foi possível carregar a imagem anexa.', TipoToast.ERROR);
+    }
+}
+
+// ======================
 // HISTÓRICO DE ATIVIDADES
 // ======================
 
