@@ -16,8 +16,8 @@ const Login = () => {
     try {
       // Payload exato esperado pelo backend Spring Boot (email e senha)
       const response = await api.post('/auth/login', { email, senha: password });
+      console.log('Resposta do Login:', response.data);
       const token = response.data.token;
-      console.log('Token recebido:', token);
       localStorage.setItem('token', token);
       navigate('/dashboard'); // Redireciona para o dashboard após o sucesso
     } catch (err) {
@@ -64,7 +64,8 @@ const Dashboard = () => {
         setTasks(response.data);
       } catch (err) {
         console.error('Erro ao buscar tarefas:', err);
-        if (err.response && err.response.status === 403) {
+        if (err.response && (err.response.status === 401 || err.response.status === 403)) {
+          console.error('Erro de permissão nas tarefas:', err);
           handleLogout();
         }
       }
