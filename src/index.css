@@ -93,7 +93,7 @@ body {
 
 .login-form input {
   width: 100%;
-  padding: 14px 14px 14px 44px; /* Espaço para o ícone na esquerda */
+  padding: 14px 44px 14px 44px; /* Espaço na esquerda e direita (para o olho) */
   background-color: var(--bg-body);
   border: 1px solid var(--border-color);
   color: var(--text-main);
@@ -120,10 +120,34 @@ body {
   transition: background-color 0.3s;
 }
 
+.eye-button {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+.eye-button:hover { color: var(--accent); }
+
 .login-form button:hover { 
   box-shadow: 0 0 20px rgba(108, 92, 231, 0.6); /* Efeito Glow */
   transform: translateY(-2px);
 }
+
+.toggle-mode-btn {
+  margin-top: 20px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  transition: color 0.2s;
+}
+.toggle-mode-btn:hover { color: var(--text-main); text-decoration: underline; }
 
 .error-message { 
   color: #ff7b72; 

@@ -1,49 +1,96 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
 
 // --- COMPONENTE DE LOGIN ---
 const Login = () => {
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      // Payload exato esperado pelo backend Spring Boot (email e senha)
-      const response = await api.post('/auth/login', { email, senha: password });
-      console.log('Resposta do Login:', response.data);
-      const token = response.data.token;
-      localStorage.setItem('token', token);
-      navigate('/dashboard'); // Redireciona para o dashboard após o sucesso
-    } catch (err) {
-      console.error('Erro ao fazer login:', err);
-      toast.error('Usuário ou senha incorretos');
-      setError('Não foi possível realizar o login.');
+    setError('');
+
+    if (isRegistering) {
+      if (password !== confirmPassword) {
+        toast.error('As senhas não coincidem!');
+        return;
+      }
+      if (password.length < 6) {
+        toast.error('A senha deve ter no mínimo 6 caracteres.');
+        return;
+      }
+      try {
+        await api.post('/auth/register', { nome, email, senha: password });
+        toast.success('Cadastro realizado com sucesso! Faça o login.');
+        setIsRegistering(false); // Volta para a tela de login
+        setPassword('');
+        setConfirmPassword('');
+      } catch (err) {
+        console.error('Erro no cadastro:', err);
+        toast.error(typeof err.response?.data === 'string' ? err.response.data : 'Erro ao realizar cadastro.');
+      }
+    } else {
+      try {
+        const response = await api.post('/auth/login', { email, senha: password });
+        const token = response.data.token;
+        localStorage.setItem('token', token);
+        navigate('/dashboard');
+      } catch (err) {
+        console.error('Erro ao fazer login:', err);
+        toast.error('Usuário ou senha incorretos');
+        setError('Não foi possível realizar o login.');
+      }
     }
   };
 
   return (
     <div className="login-wrapper">
       <div className="login-container">
-        <h2>Login - OmniProject</h2>
-        <form onSubmit={handleLogin} className="login-form">
+        <h2>{isRegistering ? 'Cadastro - OmniSaaS' : 'Login - OmniSaaS'}</h2>
+        <form onSubmit={handleSubmit} className="login-form">
+          {isRegistering && (
+            <div className="input-group">
+              <User className="input-icon" size={20} />
+              <input type="text" placeholder="Nome Completo" value={nome} onChange={e => setNome(e.target.value)} required />
+            </div>
+          )}
           <div className="input-group">
             <Mail className="input-icon" size={20} />
             <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="input-group">
             <Lock className="input-icon" size={20} />
-            <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required />
+            <input type={showPassword ? "text" : "password"} placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required />
+            <button type="button" className="eye-button" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
-          <button type="submit">Entrar</button>
+          {isRegistering && (
+            <div className="input-group">
+              <Lock className="input-icon" size={20} />
+              <input type={showConfirmPassword ? "text" : "password"} placeholder="Confirme a Senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+              <button type="button" className="eye-button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          )}
+          <button type="submit">{isRegistering ? 'Criar Conta' : 'Entrar'}</button>
           {error && <p className="error-message">{error}</p>}
         </form>
+        <button type="button" className="toggle-mode-btn" onClick={() => { setIsRegistering(!isRegistering); setError(''); }}>
+          {isRegistering ? 'Já tem uma conta? Faça Login' : 'Não tem uma conta? Cadastre-se'}
+        </button>
       </div>
     </div>
   );
