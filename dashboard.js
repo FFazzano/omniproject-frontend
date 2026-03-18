@@ -336,11 +336,11 @@ function renderizarWorkspace(ws, listaAtivos, listaConcluidos, listaNotificacoes
                 <span title="Prazo de Entrega">🎯 Prazo: <strong>${dataEntrega}</strong></span>
             </div>
         </div>
-        <div style="border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; gap: 10px;">
-            <button onclick="toggleConcluirWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: ${corConcluir}; height: 32px;">${textoConcluir}</button>
-            <button onclick="editarWorkspace(event, ${ws.id}, '${formatador.escaparHtml(ws.nome)}', '${formatador.escaparHtml(ws.descricao)}')" class="btn-primary" style="background-color: #3498db; height: 32px;">✏️ Editar</button>
-            <button onclick="convidarAmigo(event, ${ws.id})" class="btn-primary" style="background-color: #9b59b6; height: 32px;">🤝 Convidar</button>
-            <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c; height: 32px;">🗑️ Deletar</button>
+        <div class="workspace-actions">
+            <button onclick="toggleConcluirWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: ${corConcluir};">${textoConcluir}</button>
+            <button onclick="editarWorkspace(event, ${ws.id}, '${formatador.escaparHtml(ws.nome)}', '${formatador.escaparHtml(ws.descricao)}')" class="btn-primary" style="background-color: #3498db;">✏️ Editar</button>
+            <button onclick="convidarAmigo(event, ${ws.id})" class="btn-primary" style="background-color: #9b59b6;">🤝 Convidar</button>
+            <button onclick="deletarWorkspace(event, ${ws.id})" class="btn-primary" style="background-color: #e74c3c;">🗑️ Deletar</button>
         </div>
     `;
 
@@ -553,7 +553,7 @@ function renderizarTask(task, colunas) {
         <div class="task-content">
             <h4 class="${isConcluida ? 'texto-riscado' : ''}">${task.titulo}</h4>
         </div>
-        <div class="task-actions">
+        <div class="task-actions" style="flex-wrap: wrap;">
             <button onclick="abrirModalComentarios(${task.id}, '${formatador.escaparHtml(task.titulo)}')" class="btn-comentarios" title="Ver Comentários">💬</button>
             <button onclick="mudarStatusTask(${task.id}, '${formatador.escaparHtml(task.titulo)}', '${config.novoStatus}')" class="${config.classe}">${config.texto}</button>
             <button onclick="deletarTask(${task.id})" class="btn-deletar">🗑️</button>
