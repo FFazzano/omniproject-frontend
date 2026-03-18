@@ -76,6 +76,14 @@ const Dashboard = () => {
   const [newCommentText, setNewCommentText] = useState('');
   const fileInputRef = useRef(null);
 
+  // Função utilitária para corrigir o bug de fuso horário de 1 dia a menos
+  const formatarData = (dateString) => {
+    if (!dateString) return '';
+    // Pega apenas a parte 'YYYY-MM-DD' e força para o meio-dia
+    const dataIso = dateString.split('T')[0];
+    return new Date(`${dataIso}T12:00:00`).toLocaleDateString('pt-BR');
+  };
+
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
     // Recarrega a página forçando a limpeza do estado de memória e redirecionando
@@ -466,8 +474,8 @@ const Dashboard = () => {
                         <h3>{ws.nome}</h3>
                         <p className="ws-desc">{ws.descricao || 'Nenhuma descrição adicionada.'}</p>
                         <div className="ws-dates">
-                          <span><Calendar size={14}/> Criado em: {ws.dataCriacao ? new Date(ws.dataCriacao).toLocaleDateString('pt-BR') : 'N/D'}</span>
-                          <span><Target size={14}/> Prazo: {ws.dataEntrega ? new Date(ws.dataEntrega).toLocaleDateString('pt-BR') : 'Sem prazo'}</span>
+                          <span><Calendar size={14}/> Criado em: {ws.dataCriacao ? formatarData(ws.dataCriacao) : 'N/D'}</span>
+                          <span><Target size={14}/> Prazo: {ws.dataEntrega ? formatarData(ws.dataEntrega) : 'Sem prazo'}</span>
                         </div>
                         {/* Nova Barra de Progresso Visual */}
                         <div className="ws-progress-section">
