@@ -66,11 +66,32 @@ body {
   border: 1px solid var(--border-color);
 }
 
-.login-container h2 {
-  color: #ffffff;
-  margin-bottom: 25px;
-  font-weight: 600;
-  letter-spacing: -0.5px;
+.login-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.login-brand h2 {
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #58a6ff, #1f6feb);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.brand-icon-large {
+  color: var(--accent);
+}
+
+.login-subtitle {
+  color: var(--text-muted);
+  margin-bottom: 28px;
+  font-size: 15px;
 }
 
 .login-form {

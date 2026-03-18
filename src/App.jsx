@@ -57,7 +57,11 @@ const Login = () => {
   return (
     <div className="login-wrapper">
       <div className="login-container">
-        <h2>{isRegistering ? 'Cadastro - OmniSaaS' : 'Login - OmniSaaS'}</h2>
+        <div className="login-brand">
+          <LayoutDashboard className="brand-icon-large" size={32} />
+          <h2>OmniSaaS</h2>
+        </div>
+        <p className="login-subtitle">{isRegistering ? 'Crie sua conta para começar' : 'Bem-vindo de volta!'}</p>
         <form onSubmit={handleSubmit} className="login-form">
           {isRegistering && (
             <div className="input-group">
