@@ -1,86 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entrar - OmniProject</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="auth-body">
-
-    <div class="auth-container">
-        
-        <div id="login-card" class="auth-card">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: var(--primary-color); font-size: 28px; margin-bottom: 5px; margin-top: 0;">🚀 OmniProject</h2>
-                <p style="color: var(--text-muted); font-size: 14px;">Faça login para gerenciar seus projetos</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-                <label class="modal-label">E-mail</label>
-                <input type="email" id="login-email" class="input-pro" placeholder="seu@email.com">
-            </div>
-            
-            <div style="margin-bottom: 25px;">
-                <label class="modal-label">Senha</label>
-                <div class="password-wrapper">
-                    <input type="password" id="login-password" class="input-pro" placeholder="••••••••">
-                    <span class="toggle-password" onclick="togglePassword('login-password', this)">👁️</span>
-                </div>
-            </div>
-
-            <button onclick="fazerLogin()" class="btn-primary" style="width: 100%; height: 45px; font-size: 16px;">Entrar no Sistema</button>
-
-            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="color: var(--text-muted); font-size: 14px;">
-                    Não tem uma conta? <a href="#" onclick="alternarTelas()" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Cadastre-se</a>
-                </p>
-            </div>
-        </div>
-
-        <div id="register-card" class="auth-card hidden">
-            <div style="text-align: center; margin-bottom: 30px;">
-                <h2 style="color: var(--success-color); font-size: 28px; margin-bottom: 5px; margin-top: 0;">✨ Criar Conta</h2>
-                <p style="color: var(--text-muted); font-size: 14px;">Junte-se ao OmniProject hoje</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-                <label class="modal-label">Nome Completo</label>
-                <input type="text" id="register-nome" class="input-pro" placeholder="João da Silva">
-            </div>
-
-            <div style="margin-bottom: 15px;">
-                <label class="modal-label">E-mail</label>
-                <input type="email" id="register-email" class="input-pro" placeholder="seu@email.com">
-            </div>
-            
-            <div style="margin-bottom: 15px;">
-                <label class="modal-label">Senha</label>
-                <div class="password-wrapper">
-                    <input type="password" id="register-password" class="input-pro" placeholder="Crie uma senha forte">
-                    <span class="toggle-password" onclick="togglePassword('register-password', this)">👁️</span>
-                </div>
-            </div>
-
-            <div style="margin-bottom: 25px;">
-                <label class="modal-label">Confirmar Senha</label>
-                <div class="password-wrapper">
-                    <input type="password" id="register-confirm" class="input-pro" placeholder="Repita sua senha">
-                    <span class="toggle-password" onclick="togglePassword('register-confirm', this)">👁️</span>
-                </div>
-            </div>
-
-            <button onclick="fazerCadastro()" class="btn-primary" style="width: 100%; height: 45px; font-size: 16px; background-color: var(--success-color);">Cadastrar</button>
-
-            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
-                <p style="color: var(--text-muted); font-size: 14px;">
-                    Já tem uma conta? <a href="#" onclick="alternarTelas()" style="color: var(--primary-color); text-decoration: none; font-weight: bold;">Fazer Login</a>
-                </p>
-            </div>
-        </div>
-
-    </div>
-
-    <script src="script.js"></script> 
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>omniproject-frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
