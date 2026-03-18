@@ -734,7 +734,7 @@ async function carregarComentarios(taskId) {
 
         comentarios.forEach(c => {
             // Captura o nome do usuário devolvido pela API (com fallbacks de segurança)
-            const nomeAutor = c.user?.nome || c.usuario?.nome || c.autor?.nome || 'Membro do Projeto';
+            const nomeAutor = c.nomeAutor || 'Membro do Projeto';
             const bubble = document.createElement('div');
             bubble.className = 'comment-bubble';
             bubble.innerHTML = `
