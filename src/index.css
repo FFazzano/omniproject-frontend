@@ -222,6 +222,25 @@ body {
   border-top: 1px solid #30363d;
 }
 
+/* THEME TOGGLE BUTTON */
+.theme-toggle-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: var(--bg-panel);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.theme-toggle-button:hover { background-color: var(--border-color); }
+
 .logout-button {
   width: 100%;
   display: flex;
@@ -356,7 +375,7 @@ body {
 
 .tasks-header h1 {
   font-size: 32px;
-  color: #fff;
+  color: var(--text-main);
 }
 
 .tasks-subtitle {

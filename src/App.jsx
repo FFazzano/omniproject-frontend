@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw } from 'lucide-react';
 import api from './api/api';
@@ -60,6 +60,7 @@ const Dashboard = () => {
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
   const [editingWorkspace, setEditingWorkspace] = useState(null);
   const [activeTab, setActiveTab] = useState('ativos'); // ativos, concluidos, notificacoes
+  const [notifications, setNotifications] = useState([]);
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [workspaceToInvite, setWorkspaceToInvite] = useState(null);
@@ -109,7 +110,7 @@ const Dashboard = () => {
   }, [isDarkMode]);
 
   // Motor de Notificações
-  const notifications = useMemo(() => {
+  useEffect(() => {
     const newNotifs = [];
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -126,7 +127,7 @@ const Dashboard = () => {
         newNotifs.push({ id: ws.id, type: 'warning', message: `Atenção: O projeto "${ws.nome}" vence ${diffDays === 0 ? 'HOJE' : 'AMANHÃ'}!` });
       }
     });
-    return newNotifs;
+    setNotifications(newNotifs);
   }, [workspaces]);
 
   // Efeito para buscar as tarefas sempre que o Workspace atual mudar
@@ -321,7 +322,20 @@ const Dashboard = () => {
     formData.append('file', file);
 
     try {
-      await api.post(`/tasks/${selectedTask.id}/attachments`, formData);
+      const token = localStorage.getItem('token');
+      const baseURL = api.defaults?.baseURL || 'http://localhost:8080';
+      
+      // Usando fetch nativo sem o header Content-Type para gerar o boundary automaticamente
+      const response = await fetch(`${baseURL}/tasks/${selectedTask.id}/attachments`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      if (!response.ok) throw new Error('Falha no upload do arquivo');
+
       fetchCommentsAndAttachments(selectedTask.id);
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
@@ -385,14 +399,13 @@ const Dashboard = () => {
         </div>
 
         <div className="sidebar-footer">
-          <div className="theme-switch-wrapper">
-            <Sun size={18} className="theme-icon" color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
-            <label className="ios-switch">
-              <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
-              <span className="slider"></span>
-            </label>
-            <Moon size={18} className="theme-icon" color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
-          </div>
+          <button onClick={() => setIsDarkMode(!isDarkMode)} className="theme-toggle-button">
+            {isDarkMode ? (
+              <><Sun size={18} /> Modo Claro</>
+            ) : (
+              <><Moon size={18} /> Modo Escuro</>
+            )}
+          </button>
           <button onClick={handleLogout} className="logout-button">
             <LogOut size={18} />
             Sair da conta
@@ -474,7 +487,7 @@ const Dashboard = () => {
                   value={newTaskTitle} 
                   onChange={e => setNewTaskTitle(e.target.value)} 
                 />
-                <button type="submit" disabled={!newTaskTitle.trim()}>Adicionar</button>
+                <button type="submit">Adicionar</button>
               </div>
             </form>
 
