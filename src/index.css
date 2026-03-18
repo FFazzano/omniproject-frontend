@@ -129,7 +129,7 @@ body {
   box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.3);
 }
 
-.login-form button {
+.login-form button[type="submit"] {
   padding: 14px;
   background: linear-gradient(135deg, #6c5ce7, #a29bfe); /* Gradiente moderno */
   color: white;
@@ -150,11 +150,12 @@ body {
   cursor: pointer;
   display: flex;
   align-items: center;
+  padding: 0;
   transition: color 0.2s;
 }
 .eye-button:hover { color: var(--accent); }
 
-.login-form button:hover { 
+.login-form button[type="submit"]:hover { 
   box-shadow: 0 0 20px rgba(108, 92, 231, 0.6); /* Efeito Glow */
   transform: translateY(-2px);
 }
