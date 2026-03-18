@@ -120,6 +120,8 @@ const Dashboard = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [workspaceSearch, setWorkspaceSearch] = useState('');
   const [taskSearch, setTaskSearch] = useState('');
+  const [pendingInvitations, setPendingInvitations] = useState([]);
+  const [selectedInvitation, setSelectedInvitation] = useState(null);
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -166,6 +168,10 @@ const Dashboard = () => {
         );
 
         setWorkspaces(workspacesComTarefas);
+
+        // Busca os convites de projeto pendentes
+        const invRes = await api.get('/workspaces/convites');
+        setPendingInvitations(invRes.data);
       } catch (err) {
         console.error('Erro ao buscar workspaces:', err);
         if (err.response && (err.response.status === 401 || err.response.status === 403)) {
@@ -303,6 +309,45 @@ const Dashboard = () => {
     } catch (err) {
       console.error('Erro ao convidar:', err);
       toast.error(err.response?.data || 'Erro ao enviar convite.');
+    }
+  };
+
+  const handleAcceptInvite = async (id) => {
+    try {
+      await api.post(`/workspaces/${id}/aceitar-convite`);
+      toast.success('Convite aceito! Bem-vindo ao projeto.');
+      setSelectedInvitation(null);
+      setPendingInvitations(prev => prev.filter(inv => inv.id !== id));
+      
+      // Recarrega silenciosamente os projetos para exibir o novo
+      const wsResponse = await api.get('/workspaces');
+      const workspacesComTarefas = await Promise.all(
+        wsResponse.data.map(async (ws) => {
+          try {
+            const tasksRes = await api.get(`/tasks/workspace/${ws.id}`);
+            return { ...ws, tasks: tasksRes.data };
+          } catch (err) { 
+            console.error(`Erro ao buscar tarefas do workspace ${ws.id}:`, err);
+            return { ...ws, tasks: [] }; 
+          }
+        })
+      );
+      setWorkspaces(workspacesComTarefas);
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao aceitar convite.');
+    }
+  };
+
+  const handleRejectInvite = async (id) => {
+    try {
+      await api.post(`/workspaces/${id}/recusar-convite`);
+      toast.success('Convite recusado.');
+      setSelectedInvitation(null);
+      setPendingInvitations(prev => prev.filter(inv => inv.id !== id));
+    } catch (err) {
+      console.error(err);
+      toast.error('Erro ao recusar convite.');
     }
   };
 
@@ -498,6 +543,8 @@ const Dashboard = () => {
     t.titulo.toLowerCase().includes(taskSearch.toLowerCase())
   );
 
+  const totalNotifs = notifications.length + pendingInvitations.length;
+
   return (
     <div className="app-layout">
       {/* HEADER MOBILE (Só aparece em telas pequenas) */}
@@ -535,7 +582,7 @@ const Dashboard = () => {
             <li className={`nav-item ${activeTab === 'notificacoes' && !currentWorkspace ? 'active' : ''}`} onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}>
               <Bell size={18} />
               <span>Notificações</span>
-              {notifications.length > 0 && <span className="notif-badge">{notifications.length}</span>}
+              {totalNotifs > 0 && <span className="notif-badge">{totalNotifs}</span>}
             </li>
           </ul>
         </div>
@@ -575,12 +622,24 @@ const Dashboard = () => {
             
             {activeTab === 'notificacoes' ? (
               <div className="notifications-list">
-                {notifications.length === 0 ? <p className="empty-text">Você não possui alertas no momento.</p> : notifications.map((n, i) => (
-                  <div key={i} className={`notif-card ${n.type}`}>
-                    <Bell size={20} className={n.type === 'danger' ? 'icon-danger' : 'icon-warning'} />
-                    <p>{n.message}</p>
-                  </div>
-                ))}
+                {totalNotifs === 0 ? (
+                  <p className="empty-text">Você não possui alertas ou convites no momento.</p>
+                ) : (
+                  <>
+                    {pendingInvitations.map(inv => (
+                      <div key={`inv-${inv.id}`} className="notif-card info clickable" onClick={() => setSelectedInvitation(inv)}>
+                        <Bell size={20} className="icon-info" />
+                        <p>Você foi convidado para participar do projeto <strong>{inv.nome}</strong>. Clique aqui para ver.</p>
+                      </div>
+                    ))}
+                    {notifications.map((n, i) => (
+                      <div key={`alert-${i}`} className={`notif-card ${n.type}`}>
+                        <Bell size={20} className={n.type === 'danger' ? 'icon-danger' : 'icon-warning'} />
+                        <p>{n.message}</p>
+                      </div>
+                    ))}
+                  </>
+                )}
               </div>
             ) : (
               <div className="workspaces-grid">
@@ -810,6 +869,30 @@ const Dashboard = () => {
                 <input type="email" placeholder="E-mail do usuário" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} required />
                 <button type="submit" disabled={!inviteEmail.trim()}>Enviar Convite</button>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE ACEITAR/RECUSAR CONVITE */}
+      {selectedInvitation && (
+        <div className="modal-overlay" onClick={() => setSelectedInvitation(null)}>
+          <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
+            <header className="modal-header">
+              <h3>Convite de Projeto</h3>
+              <button className="close-btn" onClick={() => setSelectedInvitation(null)}><X size={20}/></button>
+            </header>
+            <div className="modal-body p-24">
+              <h4 style={{ color: 'var(--text-main)', fontSize: '18px', marginBottom: '8px' }}>{selectedInvitation.nome}</h4>
+              {selectedInvitation.descricao && <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginBottom: '16px' }}>{selectedInvitation.descricao}</p>}
+              <div className="ws-dates" style={{ marginBottom: '24px' }}>
+                <span><Calendar size={14}/> Criado em: {selectedInvitation.dataCriacao ? formatarData(selectedInvitation.dataCriacao) : 'N/D'}</span>
+                <span><Target size={14}/> Prazo: {selectedInvitation.dataEntrega ? formatarData(selectedInvitation.dataEntrega) : 'Sem prazo'}</span>
+              </div>
+              <div className="invite-actions">
+                <button onClick={() => handleAcceptInvite(selectedInvitation.id)} className="btn-success-solid">Aceitar Convite</button>
+                <button onClick={() => handleRejectInvite(selectedInvitation.id)} className="btn-danger-solid">Recusar</button>
+              </div>
             </div>
           </div>
         </div>

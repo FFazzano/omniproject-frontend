@@ -394,9 +394,19 @@ input:checked + .slider:before {
 .notif-card { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 8px; background: var(--bg-panel); border: 1px solid var(--border-color); border-left-width: 4px; }
 .notif-card.danger { border-left-color: var(--danger); }
 .notif-card.warning { border-left-color: #d29922; }
+.notif-card.info { border-left-color: var(--accent); }
 .icon-danger { color: var(--danger); }
 .icon-warning { color: #d29922; }
+.icon-info { color: var(--accent); }
 .notif-card p { font-size: 14px; color: var(--text-main); margin: 0; }
+.notif-card.clickable { cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+.notif-card.clickable:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); }
+
+.invite-actions { display: flex; gap: 12px; }
+.btn-success-solid { flex: 1; padding: 12px; background: var(--success); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-success-solid:hover { opacity: 0.8; }
+.btn-danger-solid { flex: 1; padding: 12px; background: var(--danger); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; }
+.btn-danger-solid:hover { opacity: 0.8; }
 
 .lobby-container {
   padding: 40px;
