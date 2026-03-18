@@ -8,8 +8,8 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  background-color: #0f1115; /* Fundo Modern Dark */
-  color: #c9d1d9; /* Texto cinza claro e legível */
+  background-color: #121212; /* Fundo Grafite Escuro */
+  color: #e0e0e0; /* Texto cinza claro/branco */
   display: flex;
   justify-content: center;
   min-height: 100vh;
@@ -26,12 +26,13 @@ body {
 .login-container {
   max-width: 400px;
   margin: 10vh auto; /* Centraliza verticalmente de forma responsiva */
-  background: #161b22; /* Card ligeiramente mais claro que o fundo */
+  background: rgba(255, 255, 255, 0.03); /* Glassmorphism Base */
+  backdrop-filter: blur(12px); /* Efeito de Vidro */
   padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   text-align: center;
-  border: 1px solid #30363d;
+  border: 1px solid rgba(255, 255, 255, 0.08); /* Borda brilhante suave */
 }
 
 .login-container h2 {
@@ -47,11 +48,24 @@ body {
   gap: 15px;
 }
 
+.input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 14px;
+  color: #888;
+}
+
 .login-form input {
-  padding: 14px;
-  background-color: #0d1117;
-  border: 1px solid #30363d;
-  color: #c9d1d9;
+  width: 100%;
+  padding: 14px 14px 14px 44px; /* Espaço para o ícone na esquerda */
+  background-color: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ffffff;
   border-radius: 8px;
   font-size: 15px;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -59,13 +73,13 @@ body {
 
 .login-form input:focus {
   outline: none;
-  border-color: #58a6ff;
-  box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.3);
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.3);
 }
 
 .login-form button {
   padding: 14px;
-  background-color: #238636; /* Verde moderno estilo GitHub */
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe); /* Gradiente moderno */
   color: white;
   border: none;
   border-radius: 8px;
@@ -75,7 +89,10 @@ body {
   transition: background-color 0.3s;
 }
 
-.login-form button:hover { background-color: #2ea043; }
+.login-form button:hover { 
+  box-shadow: 0 0 20px rgba(108, 92, 231, 0.6); /* Efeito Glow */
+  transform: translateY(-2px);
+}
 
 .error-message { 
   color: #ff7b72; 
@@ -84,21 +101,22 @@ body {
   background: rgba(255, 123, 114, 0.1);
   padding: 10px;
   border-radius: 6px;
-  border: 1px solid rgba(255, 123, 114, 0.4);
+  border: 1px solid rgba(255, 123, 114, 0.2);
 }
 
 /* Estilos do Dashboard */
 .dashboard-container {
-  background: #161b22;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
   padding: 30px;
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-  border: 1px solid #30363d;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .dashboard-header {
   display: flex; justify-content: space-between; align-items: center;
-  border-bottom: 1px solid #30363d; padding-bottom: 20px; margin-bottom: 25px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 20px; margin-bottom: 25px;
 }
 
 .dashboard-header h1 {
@@ -115,20 +133,20 @@ body {
 
 .task-list { list-style: none; margin-top: 15px; }
 .task-item {
-  background: #0d1117; padding: 15px 20px; margin-bottom: 12px;
-  border-radius: 8px; border: 1px solid #30363d;
+  background: rgba(0, 0, 0, 0.2); padding: 15px 20px; margin-bottom: 12px;
+  border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05);
   display: flex; justify-content: space-between; align-items: center;
   transition: transform 0.2s, border-color 0.2s;
 }
 
 .task-item:hover {
   transform: translateY(-2px);
-  border-color: #8b949e;
+  border-color: #6c5ce7;
 }
 
 .task-status {
   font-size: 12px;
-  background: #238636;
+  background: #6c5ce7;
   color: white;
   padding: 4px 10px;
   border-radius: 12px;

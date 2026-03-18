@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Mail, Lock } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 
@@ -16,15 +17,13 @@ const Login = () => {
       // Payload exato esperado pelo backend Spring Boot (email e senha)
       const response = await api.post('/auth/login', { email, senha: password });
       const token = response.data.token;
+      console.log('Token recebido:', token);
       localStorage.setItem('token', token);
       navigate('/dashboard'); // Redireciona para o dashboard após o sucesso
     } catch (err) {
       console.error('Erro ao fazer login:', err);
-      if (err.response) {
-        setError('Usuário ou senha inválidos.');
-      } else {
-        setError('Erro de conexão com o servidor.');
-      }
+      alert('Usuário ou senha incorretos');
+      setError('Não foi possível realizar o login.');
     }
   };
 
@@ -32,8 +31,14 @@ const Login = () => {
     <div className="login-container">
       <h2>Login - OmniProject</h2>
       <form onSubmit={handleLogin} className="login-form">
-        <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required />
-        <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required />
+        <div className="input-group">
+          <Mail className="input-icon" size={20} />
+          <input type="email" placeholder="E-mail" value={email} onChange={e => setEmail(e.target.value)} required />
+        </div>
+        <div className="input-group">
+          <Lock className="input-icon" size={20} />
+          <input type="password" placeholder="Senha" value={password} onChange={e => setPassword(e.target.value)} required />
+        </div>
         <button type="submit">Entrar</button>
         {error && <p className="error-message">{error}</p>}
       </form>
