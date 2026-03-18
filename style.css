@@ -146,6 +146,7 @@ body {
 }
 
 .input-pro {
+    box-sizing: border-box;
     flex: 1 1 200px; padding: 0.75rem 1rem; border: 1px solid var(--border-color);
     border-radius: 6px; background: var(--bg-color); color: var(--text-color);
     font-size: 0.875rem; outline: none; transition: border 0.2s;
@@ -313,7 +314,8 @@ body {
     
     .sidebar-brand { padding: 10px; border: none; }
     .view-container { padding: 15px; }
-    .action-toolbar { flex-direction: column; }
+    .action-toolbar { flex-direction: column; align-items: stretch; }
+    .action-toolbar .btn-primary { width: 100% !important; }
     
     .view-header.flex-between { flex-direction: column; align-items: flex-start; gap: 20px;}
     .project-progress-container { margin-left: 0 !important; margin-top: 10px; width: 100% !important; }
