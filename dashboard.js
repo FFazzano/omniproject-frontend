@@ -794,13 +794,21 @@ async function enviarAnexo() {
         return;
     }
 
+    // 1. Instanciamos o FormData
     const formData = new FormData();
+    // 2. Chave 'file' EXATAMENTE como esperado no @RequestParam do Spring Boot
     formData.append('file', file);
 
     try {
-        const response = await api.request(`/tasks/${state.tarefaComentariosId}/attachments`, {
+        // 3. Usamos o fetch nativo para ter controle absoluto dos Headers
+        const response = await fetch(`${API_URL}/tasks/${state.tarefaComentariosId}/attachments`, {
             method: 'POST',
-            body: formData // NOTA SÊNIOR: Não enviamos o Content-Type. O navegador cria o boundary!
+            headers: {
+                'Authorization': `Bearer ${TOKEN}`
+                // ⚠️ O CABEÇALHO ASSASSINO FOI REMOVIDO! 
+                // Nunca coloque 'Content-Type': 'multipart/form-data' aqui.
+            },
+            body: formData
         });
 
         if (!response.ok) throw new Error('Erro ao anexar arquivo');
