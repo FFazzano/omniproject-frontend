@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
+import LandingPage from './LandingPage';
 
 // --- COMPONENTE DE LOGIN ---
 const Login = () => {
-  const [isRegistering, setIsRegistering] = useState(false);
+  const location = useLocation();
+  const [isRegistering, setIsRegistering] = useState(location.state?.register || false);
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,6 +18,18 @@ const Login = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') !== 'light');
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.body.classList.remove('dark-mode');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDarkMode]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -56,6 +70,16 @@ const Login = () => {
 
   return (
     <div className="login-wrapper">
+      {/* Botão de Tema no Login */}
+      <div className="theme-switch-wrapper" style={{ position: 'absolute', top: 24, right: 24, marginBottom: 0 }}>
+        <Sun size={18} color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+        <label className="theme-switch">
+          <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
+          <span className="slider"></span>
+        </label>
+        <Moon size={18} color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+      </div>
+
       <div className="login-container">
         <div className="login-brand">
           <LayoutDashboard className="brand-icon-large" size={32} />
@@ -915,7 +939,10 @@ function App() {
   return (
     <>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Rota Raiz agora renderiza a Landing Page */}
+        <Route path="/" element={<LandingPage />} />
+        
+        {/* Rota de Autenticação */}
         <Route path="/login" element={<Login />} />
         
         <Route 
