@@ -5,6 +5,7 @@ import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
 import LandingPage from './LandingPage';
+import Agenda from './Agenda';
 
 // --- COMPONENTE DE LOGIN ---
 const Login = () => {
@@ -148,6 +149,7 @@ const Dashboard = () => {
   const [taskSearch, setTaskSearch] = useState('');
   const [pendingInvitations, setPendingInvitations] = useState([]);
   const [selectedInvitation, setSelectedInvitation] = useState(null);
+  const navigate = useNavigate();
   
   // Estados Avançados: Modais, Drawers e Arquivos
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
@@ -633,6 +635,10 @@ const Dashboard = () => {
               <span>Notificações</span>
               {totalNotifs > 0 && <span className="notif-badge">{totalNotifs}</span>}
             </li>
+            <li className="nav-item" onClick={() => navigate('/agenda')}>
+              <Calendar size={18} />
+              <span>Agenda</span>
+            </li>
           </ul>
         </div>
 
@@ -1021,6 +1027,15 @@ function App() {
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/agenda" 
+          element={
+            <ProtectedRoute>
+              <Agenda />
             </ProtectedRoute>
           } 
         />
