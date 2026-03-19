@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search, Repeat } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
@@ -132,6 +132,8 @@ const Dashboard = () => {
   const [newWorkspaceName, setNewWorkspaceName] = useState('');
   const [newWorkspaceDeadline, setNewWorkspaceDeadline] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
+  const [newTaskTipoRecorrencia, setNewTaskTipoRecorrencia] = useState('NENHUMA');
+  const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isWorkspaceModalOpen, setIsWorkspaceModalOpen] = useState(false);
   const [newWorkspaceDesc, setNewWorkspaceDesc] = useState('');
   const [editingWorkspace, setEditingWorkspace] = useState(null);
@@ -378,11 +380,19 @@ const Dashboard = () => {
   const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!newTaskTitle.trim() || !currentWorkspace) return;
+
     try {
-      const payload = { titulo: newTaskTitle, status: 'PENDENTE', workspaceId: currentWorkspace.id };
+      const payload = { 
+        titulo: newTaskTitle, 
+        status: 'PENDENTE', 
+        workspaceId: currentWorkspace.id,
+        tipoRecorrencia: newTaskTipoRecorrencia
+      };
       const res = await api.post('/tasks', payload);
       setTasks([...tasks, res.data]);
       setNewTaskTitle('');
+      setNewTaskTipoRecorrencia('NENHUMA');
+      setIsTaskModalOpen(false); // Fecha o modal após o sucesso
       toast.success('Tarefa adicionada!');
 
       // Sincroniza a criação da tarefa com o estado do Lobby para a barra de progresso
@@ -448,9 +458,14 @@ const Dashboard = () => {
       await api.put(`/tasks/${taskId}`, { 
         titulo: taskToUpdate.titulo, 
         descricao: taskToUpdate.descricao || '', 
-        status: newStatus 
+        status: newStatus,
+        tipoRecorrencia: taskToUpdate.tipoRecorrencia
       });
       if (isHistoryOpen) carregarHistorico();
+
+      // Recarrega a lista para que a nova tarefa clone apareça instantaneamente se for recorrente
+      const resTasks = await api.get(`/tasks/workspace/${currentWorkspace.id}`);
+      setTasks(resTasks.data);
     } catch (err) {
       console.error('Erro ao mover tarefa:', err);
     }
@@ -577,9 +592,19 @@ const Dashboard = () => {
           <LayoutDashboard className="brand-icon-large" size={24} />
           <h2 style={{ fontSize: '20px' }}>OmniSaaS</h2>
         </div>
-        <button className="menu-button" onClick={() => setIsMobileMenuOpen(true)}>
-          <Menu size={24} color="var(--text-main)" />
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <button 
+            onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }} 
+            className="relative"
+            style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', cursor: 'pointer', display: 'flex' }}
+          >
+            <Bell size={24} />
+            {totalNotifs > 0 && <span className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '-2px', right: '-2px' }}></span>}
+          </button>
+          <button className="menu-button" onClick={() => setIsMobileMenuOpen(true)}>
+            <Menu size={24} color="var(--text-main)" />
+          </button>
+        </div>
       </div>
 
       {/* OVERLAY MOBILE PARA FECHAR O MENU */}
@@ -612,13 +637,25 @@ const Dashboard = () => {
         </div>
 
         <div className="sidebar-footer">
-          <div className="theme-switch-wrapper">
-            <Sun size={18} color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
-            <label className="theme-switch">
-              <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
-              <span className="slider"></span>
-            </label>
-            <Moon size={18} color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '0 8px' }}>
+            <div className="theme-switch-wrapper" style={{ marginBottom: 0 }}>
+              <Sun size={18} color={!isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+              <label className="theme-switch">
+                <input type="checkbox" checked={isDarkMode} onChange={(e) => setIsDarkMode(e.target.checked)} />
+                <span className="slider"></span>
+              </label>
+              <Moon size={18} color={isDarkMode ? "var(--accent)" : "var(--text-muted)"} />
+            </div>
+            
+            <button 
+              onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}
+              className="relative"
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+              title="Notificações"
+            >
+              <Bell size={20} />
+              {totalNotifs > 0 && <span className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '-2px', right: '-2px' }}></span>}
+            </button>
           </div>
           <button onClick={handleLogout} className="logout-button">
             <LogOut size={18} />
@@ -736,19 +773,6 @@ const Dashboard = () => {
               </div>
             </header>
 
-            <form onSubmit={handleCreateTask} className="create-task-form">
-              <div className="input-group-task">
-                <Plus className="input-icon-task" size={20} />
-                <input 
-                  type="text" 
-                  placeholder="O que precisa ser feito?" 
-                  value={newTaskTitle} 
-                  onChange={e => setNewTaskTitle(e.target.value)} 
-                />
-                <button type="submit">Adicionar</button>
-              </div>
-            </form>
-
             {/* BOARD KANBAN */}
             <div className="kanban-board">
               {KANBAN_COLUMNS.map(col => (
@@ -763,6 +787,11 @@ const Dashboard = () => {
                       <span className="task-count">{filteredTasks.filter(t => t.status === col.id).length}</span>
                   </div>
                   <div className="scrollable-column">
+                      {col.id === 'PENDENTE' && (
+                        <button className="btn-add-task" onClick={() => setIsTaskModalOpen(true)}>
+                          <Plus size={16} /> Adicionar Nova Tarefa
+                        </button>
+                      )}
                       {filteredTasks.filter(t => t.status === col.id).map(task => (
                       <div 
                         key={task.id} 
@@ -773,6 +802,14 @@ const Dashboard = () => {
                         <div className="task-drag-handle"><GripVertical size={16} /></div>
                         <div className="task-content">
                           <h4 className={task.status === 'CONCLUIDA' ? 'text-strikethrough' : ''}>{task.titulo}</h4>
+                          {task.tipoRecorrencia && task.tipoRecorrencia !== 'NENHUMA' && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-muted)', marginTop: '6px' }}>
+                              <span style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <Repeat size={12} title={`Recorrência: ${task.tipoRecorrencia}`} />
+                                <span>Recorrente</span>
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <div className="task-actions">
                           <button className="btn-icon-small" onClick={() => openTaskModal(task)} title="Ver Detalhes">
@@ -917,6 +954,40 @@ const Dashboard = () => {
                 <button onClick={() => handleAcceptInvite(selectedInvitation.id)} className="btn-success-solid">Aceitar Convite</button>
                 <button onClick={() => handleRejectInvite(selectedInvitation.id)} className="btn-danger-solid">Recusar</button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE CRIAR TAREFA */}
+      {isTaskModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsTaskModalOpen(false)}>
+          <div className="modal-content small-modal" onClick={e => e.stopPropagation()}>
+            <header className="modal-header">
+              <h3>Nova Tarefa</h3>
+              <button className="close-btn" onClick={() => setIsTaskModalOpen(false)}><X size={20}/></button>
+            </header>
+            <div className="modal-body p-24">
+              <form onSubmit={handleCreateTask} className="standard-form">
+                <input 
+                  type="text" 
+                  placeholder="Título da Tarefa (Ex: Atualizar layout do dashboard)" 
+                  value={newTaskTitle} 
+                  onChange={e => setNewTaskTitle(e.target.value)} 
+                  required 
+                />
+                
+                <label className="input-label"><Repeat size={14}/> Recorrência (Repete ao concluir):</label>
+                <select value={newTaskTipoRecorrencia} onChange={e => setNewTaskTipoRecorrencia(e.target.value)}>
+                  <option value="NENHUMA">Sem repetição</option>
+                  <option value="DIARIA">Repetir Diariamente</option>
+                  <option value="SEMANAL">Repetir Semanalmente</option>
+                  <option value="QUINZENAL">Repetir Quinzenalmente</option>
+                  <option value="MENSAL">Repetir Mensalmente</option>
+                </select>
+
+                <button type="submit" disabled={!newTaskTitle.trim()}>Criar Tarefa</button>
+              </form>
             </div>
           </div>
         </div>
