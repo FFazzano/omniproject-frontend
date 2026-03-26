@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search, Repeat } from 'lucide-react';
+import { Mail, Lock, LayoutDashboard, Folder, Plus, Trash2, CheckCircle, Circle, LogOut, Activity, MessageSquare, Paperclip, Clock, GripVertical, X, Download, Home, ArrowLeft, CheckSquare, Bell, Calendar, Target, Edit, UserPlus, Sun, Moon, RotateCcw, Eye, EyeOff, User, Menu, Search, Repeat, Settings } from 'lucide-react';
 import api from './api/api';
 import './App.css';
 import toast, { Toaster } from 'react-hot-toast';
 import LandingPage from './LandingPage';
 import Agenda from './Agenda';
+import TrixChat from './TrixChat';
 
 // --- COMPONENTE DE LOGIN ---
 const Login = () => {
@@ -654,13 +655,12 @@ const Dashboard = () => {
             </div>
             
             <button 
-              onClick={() => { setActiveTab('notificacoes'); setCurrentWorkspace(null); setIsMobileMenuOpen(false); }}
+              onClick={() => { /* Lógica para abrir modal/página de configurações no futuro */ }}
               className="relative"
               style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-              title="Notificações"
+              title="Configurações"
             >
-              <Bell size={20} />
-              {totalNotifs > 0 && <span className="absolute w-2 h-2 bg-red-500 rounded-full" style={{ top: '-2px', right: '-2px' }}></span>}
+              <Settings size={20} />
             </button>
           </div>
           <button onClick={handleLogout} className="logout-button">
@@ -1045,6 +1045,7 @@ function App() {
       </Routes>
       {/* Injeta o provedor global de Toasts com uma UX clean e moderna */}
       <Toaster position="bottom-right" toastOptions={{ duration: 4000, style: { background: 'var(--bg-panel)', color: 'var(--text-main)', border: '1px solid var(--border-color)' } }} />
+      <TrixChat />
     </>
   );
 }

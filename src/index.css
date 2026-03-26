@@ -535,6 +535,7 @@ input:checked + .slider:before {
   margin: 0 auto; /* Equivalente a mx-auto */
   flex: 1;
   padding: 0 32px 20px 32px;
+  min-height: 0;
 }
 
 .kanban-column {
@@ -1413,3 +1414,92 @@ h4 { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-botto
   .final-cta-section h2 { font-size: 32px; }
   .final-cta-section p { font-size: 16px; }
 }
+
+/* =========================================
+   TRIX AI CHAT (Assistente)
+   ========================================= */
+.trix-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.trix-fab {
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  color: white;
+  border: none;
+  border-radius: 50%; /* Bola flutuante perfeita */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.trix-fab:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(108, 92, 231, 0.4);
+}
+
+.trix-popover {
+  margin-bottom: 16px;
+  width: 360px;
+  max-width: calc(100vw - 48px);
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.trix-header {
+  background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+  padding: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+.trix-header h3 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.trix-close-btn { background: transparent; border: none; color: rgba(255,255,255,0.8); cursor: pointer; transition: 0.2s; display: flex;}
+.trix-close-btn:hover { color: white; transform: scale(1.1); }
+
+.trix-chat-area {
+  height: 350px;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: var(--bg-body);
+}
+
+.trix-msg {
+  max-width: 85%;
+  padding: 10px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  border-radius: 16px;
+}
+.trix-msg.user { background-color: var(--accent); color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+.trix-msg.trix { background-color: var(--bg-panel); color: var(--text-main); border: 1px solid var(--border-color); align-self: flex-start; border-bottom-left-radius: 4px; }
+
+.trix-input-area {
+  padding: 12px;
+  background-color: var(--bg-panel);
+  border-top: 1px solid var(--border-color);
+}
+.trix-form { display: flex; gap: 8px; }
+.trix-input { flex: 1; background: var(--bg-body); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 8px; padding: 10px 14px; font-size: 14px; outline: none; transition: 0.2s; }
+.trix-input:focus { border-color: var(--accent); }
+.trix-send-btn { background-color: var(--accent); color: white; border: none; padding: 10px 12px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+.trix-send-btn:hover:not(:disabled) { background-color: var(--accent-hover); }
+.trix-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
